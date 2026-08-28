@@ -1,26 +1,129 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --mint: #ffffff;
+  --ink: #0a0a0a;
+  --ink-soft: #5a5a5a;
+  --line: #e0e0e0;
+  --dark: #050505;
+  --dark-card: #0d0d0d;
+  --dark-line: #2b2b2b;
+  --accent: #ffffff;
+  --accent-ink: #0a0a0a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-mint: var(--mint);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-dark: var(--dark);
+  --color-dark-card: var(--dark-card);
+  --color-dark-line: var(--dark-line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+
+  --font-sans: var(--font-roboto);
+  --font-display: var(--font-roboto);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+
+  /* Scrollbar tracks the surface currently in view: dark thumb on the light
+     page body, light thumb over the near-black hero/footer. */
+  --sb-thumb: #0a0a0a;
+  --sb-track: #ffffff;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
+}
+
+html[data-surface="dark"] {
+  --sb-thumb: #ffffff;
+  --sb-track: #050505;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: var(--sb-track);
+}
+
+html::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border: 2px solid var(--sb-track);
+  border-radius: 999px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--mint);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+.sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.container-px {
+  padding-left: clamp(1.25rem, 4vw, 3.5rem);
+  padding-right: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+.section-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+@keyframes scroll-line {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scaleY(0.35);
+    opacity: 0.35;
+  }
+}
+
+.animate-scroll-line {
+  transform-origin: top;
+  animation: scroll-line 2.2s ease-in-out infinite;
+}
+
+@keyframes accent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.animate-accent-pulse {
+  animation: accent-pulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-line,
+  .animate-accent-pulse {
+    animation: none;
+  }
 }
