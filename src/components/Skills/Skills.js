@@ -184,6 +184,7 @@ export default function Skills() {
       /* ---------------------------------------------------------- */
 
       const sections = q("[data-section]");
+      const listenerCleanups = [];
 
       sections.forEach((section) => {
         const label = section.querySelector("[data-label]");
@@ -217,6 +218,10 @@ export default function Skills() {
 
         label.addEventListener("mouseenter", focus);
         label.addEventListener("mouseleave", blur);
+        listenerCleanups.push(() => {
+          label.removeEventListener("mouseenter", focus);
+          label.removeEventListener("mouseleave", blur);
+        });
       });
 
       /* ---------------------------------------------------------- */
@@ -290,7 +295,14 @@ export default function Skills() {
         pill.addEventListener("mouseenter", onEnter);
         pill.addEventListener("mouseleave", onLeave);
         if (canMagnet) pill.addEventListener("mousemove", onMove);
+        listenerCleanups.push(() => {
+          pill.removeEventListener("mouseenter", onEnter);
+          pill.removeEventListener("mouseleave", onLeave);
+          if (canMagnet) pill.removeEventListener("mousemove", onMove);
+        });
       });
+
+      return () => listenerCleanups.forEach((cleanup) => cleanup());
     }, rootRef);
 
     return () => ctx.revert();

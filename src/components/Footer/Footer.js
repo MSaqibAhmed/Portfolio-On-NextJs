@@ -1,17 +1,16 @@
 import { social, isRealLink } from "@/data/social";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import SectionLink from "@/components/ui/SectionLink";
 
 const quickLinksA = [
   { label: "Home", href: "#home" },
   { label: "Skills", href: "#skills" },
-  { label: "What I Do", href: "#what-i-do" },
   { label: "Achievements", href: "#achievements" },
 ];
 
 const quickLinksB = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
-  { label: "How I Work", href: "#how-i-work" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -43,18 +42,18 @@ export default function Footer() {
               <ul className="space-y-3">
                 {quickLinksA.map((link) => (
                   <li key={link.href}>
-                    <a href={link.href} className="text-white/80 hover:text-white">
+                    <SectionLink href={link.href} className="text-white/80 hover:text-white">
                       {link.label}
-                    </a>
+                    </SectionLink>
                   </li>
                 ))}
               </ul>
               <ul className="space-y-3">
                 {quickLinksB.map((link) => (
                   <li key={link.href}>
-                    <a href={link.href} className="text-white/80 hover:text-white">
+                    <SectionLink href={link.href} className="text-white/80 hover:text-white">
                       {link.label}
-                    </a>
+                    </SectionLink>
                   </li>
                 ))}
               </ul>
@@ -110,9 +109,9 @@ export default function Footer() {
 
         <div data-reveal className="mt-16 flex items-center justify-between border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
           <span>© 2026 Saqib Ahmed</span>
-          <a href="#home" className="inline-flex items-center gap-1.5 hover:text-white">
+          <SectionLink href="#home" className="inline-flex items-center gap-1.5 hover:text-white">
             Back to top ↑
-          </a>
+          </SectionLink>
         </div>
       </div>
 

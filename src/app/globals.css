@@ -61,7 +61,16 @@ html::-webkit-scrollbar-thumb {
 body {
   background: var(--mint);
   color: var(--ink);
-  overflow-x: hidden;
+}
+
+/* Horizontal safety net on the root, using `clip` rather than `hidden`.
+   `overflow-x: hidden` on <body> turns body into its own scroll container:
+   the viewport stops being the scroller, which silently breaks
+   scrollIntoView(), in-page anchors and native smooth scrolling — and made
+   the page feel stuck on phones. `clip` cuts the overflow without ever
+   creating a scroll container. */
+html {
+  overflow-x: clip;
 }
 
 .sr-only-focusable {
@@ -142,35 +151,24 @@ html[data-nav-open="true"] .nav-plate {
   background: rgb(var(--nav-ink) / 0.5);
 }
 
-/* What I Do — the technical diagram is fully painted but only visible inside
-   a soft disc that tracks the cursor, so the resting composition stays clean.
-   --mx/--my are driven by GSAP quickSetter. */
-.wid-reveal {
-  --mx: 50%;
-  --my: 50%;
-  -webkit-mask-image: radial-gradient(
-    circle 170px at var(--mx) var(--my),
-    #000 0%,
-    #000 38%,
-    transparent 72%
-  );
-  mask-image: radial-gradient(
-    circle 170px at var(--mx) var(--my),
-    #000 0%,
-    #000 38%,
-    transparent 72%
-  );
-}
+/* On phones the sections run together because the big desktop whitespace is
+   gone. A hairline between consecutive light sections makes each start
+   legible without touching any component's layout. Dark surfaces (hero,
+   footer) already separate themselves by contrast. */
+@media (max-width: 767px) {
+  main > section + section:not([data-surface-dark]) {
+    border-top: 1px solid var(--line);
+  }
 
-/* How I Work — reduced motion: the pinned scrub is skipped, so the stage
-   copy has to leave its absolute stack and read as a normal list. */
-.hiw-static {
-  height: auto;
-}
+  main > section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
 
-.hiw-static [data-stage] {
-  position: static;
-  margin-bottom: 2.5rem;
+  main > section#home {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 @keyframes scroll-line {

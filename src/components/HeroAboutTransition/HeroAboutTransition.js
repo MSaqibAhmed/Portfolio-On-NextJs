@@ -4,10 +4,9 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 // Maps `value` from [inMin, inMax] to [outMin, outMax], clamped.
@@ -20,11 +19,12 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 // a single traveling element (front = hero.png, back = about.png) moves
 // between the two images. Boxes are measured once per ScrollTrigger refresh
 // in DOCUMENT space and converted to viewport space each tick by subtracting
-// the smoother's scroll offset — so the per-tick work is pure transform and
+// the current scroll offset — so the per-tick work is pure transform and
 // never touches layout.
 // Desktop (>=1024px) and motion-safe only — see the matchMedia gate below.
-// Rendered outside #smooth-wrapper/#smooth-content (see page.js) so its
-// `position: fixed` isn't broken by ScrollSmoother's transform.
+// Rendered outside #page-content (see page.js), which is the element the
+// radial menu scales when it opens — this overlay must stay unscaled and
+// fixed to the real viewport throughout.
 export default function HeroAboutTransition() {
   const overlayRef = useRef(null);
   const cardRef = useRef(null);
@@ -53,20 +53,17 @@ export default function HeroAboutTransition() {
 
         gsap.set(overlay, { position: "fixed", top: 0, left: 0 });
 
-        // Both photos live inside #smooth-content, so their positions in
+        // Both photos live in normal document flow, so their positions in
         // DOCUMENT space are constant — only their viewport position moves,
-        // by exactly the smoother's scroll offset. Measuring once per refresh
+        // by exactly the page's scroll offset. Measuring once per refresh
         // (instead of reading two rects every tick) and driving the overlay
-        // with transforms keeps this off the layout path entirely; the old
-        // version read rects and wrote top/left/width/height every frame,
-        // which forced a synchronous reflow on every scroll tick.
+        // with transforms keeps this off the layout path entirely; reading
+        // rects and writing top/left/width/height every frame would force a
+        // synchronous reflow on every scroll tick.
         let heroBox = null;
         let aboutBox = null;
 
-        const scrollOffset = () => {
-          const s = ScrollSmoother.get?.();
-          return s ? s.scrollTop() : window.scrollY;
-        };
+        const scrollOffset = () => window.scrollY;
 
         function measure() {
           const off = scrollOffset();

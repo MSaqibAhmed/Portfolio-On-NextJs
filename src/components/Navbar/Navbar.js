@@ -2,12 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { navMenu, NAV_ANGLES } from "@/data/navMenu";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollSmoother);
-}
+import scrollToSection from "@/lib/scrollToSection";
+import useActiveSection from "@/lib/useActiveSection";
 
 const DEG = Math.PI / 180;
 
@@ -45,7 +42,7 @@ function computeLayout() {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
+  const activeIndex = useActiveSection(SECTION_IDS);
   const [hovered, setHovered] = useState(-1);
 
   // DOM
@@ -147,13 +144,8 @@ export default function Navbar() {
   /* ------------------------------------------------------------------ */
 
   const lockScroll = useCallback((lock) => {
-    const smoother = ScrollSmoother.get?.();
-    if (smoother) {
-      smoother.paused(lock);
-      return;
-    }
-    // No smoother (reduced motion): lock natively, compensating for the
-    // scrollbar so the page underneath doesn't shift.
+    // Lock natively, compensating for the scrollbar so the page underneath
+    // doesn't shift.
     const root = document.documentElement;
     if (lock) {
       const sbw = window.innerWidth - root.clientWidth;
@@ -173,7 +165,7 @@ export default function Navbar() {
     const layout = applyLayout();
     const reduce = reduceRef.current;
     const overlay = overlayRef.current;
-    const page = document.querySelector("#smooth-wrapper");
+    const page = document.querySelector("#page-content");
     lockScroll(true);
 
     tlRef.current?.kill();
@@ -292,7 +284,7 @@ export default function Navbar() {
   const playClose = useCallback(() => {
     const reduce = reduceRef.current;
     const overlay = overlayRef.current;
-    const page = document.querySelector("#smooth-wrapper");
+    const page = document.querySelector("#page-content");
 
     tlRef.current?.kill();
     gsap.killTweensOf([
@@ -494,26 +486,6 @@ export default function Navbar() {
     };
   }, [applyLayout]);
 
-  // Scroll-spy — passive, never hijacks scrolling.
-  useEffect(() => {
-    const targets = SECTION_IDS.map((id) => document.getElementById(id)).filter(Boolean);
-    if (!targets.length) return undefined;
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const i = SECTION_IDS.indexOf(entry.target.id);
-          if (i !== -1) setActiveIndex(i);
-        });
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
-    );
-
-    targets.forEach((t) => io.observe(t));
-    return () => io.disconnect();
-  }, []);
-
   // Escape to close + focus trap while open.
   useEffect(() => {
     if (!open) return undefined;
@@ -655,7 +627,7 @@ export default function Navbar() {
         coreRef.current,
         indicatorRef.current,
         previewRef.current,
-        document.querySelector("#smooth-wrapper"),
+        document.querySelector("#page-content"),
         ...dotRefs.current.filter(Boolean),
         ...slotRefs.current.filter(Boolean),
         ...magnetRefs.current.filter(Boolean),
@@ -675,17 +647,17 @@ export default function Navbar() {
     (e, href) => {
       e.preventDefault();
       close();
-      const target = document.querySelector(href);
-      if (!target) return;
-      const delay = reduceRef.current ? 0 : 0.42;
-      gsap.delayedCall(delay, () => {
-        const smoother = ScrollSmoother.get?.();
-        if (smoother) smoother.scrollTo(target, true);
-        else target.scrollIntoView({ block: "start" });
-      });
+      // Plain timer, not gsap.delayedCall: that rides the animation ticker,
+      // so a throttled tab could leave the jump pending forever.
+      window.setTimeout(() => scrollToSection(href), reduceRef.current ? 0 : 420);
     },
     [close]
   );
+
+  // Label shown in the pill on phones — falls back to the wordmark before
+  // the spy has settled on a section.
+  const activeLabel =
+    activeIndex >= 0 && navMenu[activeIndex] ? navMenu[activeIndex].label : "Saqib Ahmed";
 
   const previewItem = hovered >= 0 ? navMenu[hovered] : null;
 
@@ -701,7 +673,10 @@ export default function Navbar() {
             ref={brandWrapRef}
             className="overflow-hidden whitespace-nowrap font-display text-[0.65rem] font-medium uppercase tracking-[0.3em] text-white sm:text-xs"
           >
-            Saqib Ahmed
+            {/* On phones the pill is the only wayfinding on screen, so it
+                names the section you're in. Desktop keeps the wordmark. */}
+            <span className="sm:hidden">{activeLabel}</span>
+            <span className="hidden sm:inline">Saqib Ahmed</span>
           </span>
           <span aria-hidden className="h-4 w-px shrink-0 bg-white/15" />
           <button
