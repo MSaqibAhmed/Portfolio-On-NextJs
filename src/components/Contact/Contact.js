@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
-import { social } from "@/data/social";
+import { social, isRealLink } from "@/data/social";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
 const links = [
   { label: "GitHub", href: social.github },
@@ -9,35 +10,53 @@ const links = [
 
 export default function Contact() {
   return (
-    <section id="contact" className="container-px py-20 sm:py-28">
+    <ScrollReveal
+      as="section"
+      id="contact"
+      className="container-px py-20 sm:py-28"
+      y={38}
+      clip
+      stagger={0.11}
+      duration={1}
+    >
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col">
-          <p className="section-eyebrow text-ink-soft">04 / Connect</p>
-          <h2 className="mt-4 font-sans text-[clamp(2.25rem,11vw,4.5rem)] font-extrabold leading-[0.95] tracking-tight">
+          <p data-reveal className="section-eyebrow text-ink-soft">04 / Connect</p>
+          <h2 data-reveal className="mt-4 font-sans text-[clamp(2.25rem,11vw,4.5rem)] font-extrabold leading-[0.95] tracking-tight">
             Let&rsquo;s
             <br />
             Talk.
           </h2>
-          <p className="mt-6 max-w-sm text-base text-ink-soft sm:text-lg">
+          <p data-reveal className="mt-6 max-w-sm text-base text-ink-soft sm:text-lg">
             Have a project, opportunity, or idea? Let&rsquo;s build something
             meaningful together.
           </p>
 
-          <ul className="mt-10 space-y-4">
-            {links.map((link) => (
-              <li key={link.label}>
-                <a
-                  href={link.href}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em]"
-                >
-                  {link.label}
-                  <ArrowUpRight className="h-4 w-4" />
-                </a>
-              </li>
-            ))}
+          <ul data-reveal className="mt-10 space-y-4">
+            {links.map((link) =>
+              isRealLink(link.href) ? (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    target={link.href.startsWith("http") ? "_blank" : undefined}
+                    rel={link.href.startsWith("http") ? "noreferrer" : undefined}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em]"
+                  >
+                    {link.label}
+                    <ArrowUpRight className="h-4 w-4" />
+                  </a>
+                </li>
+              ) : (
+                <li key={link.label}>
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                    {link.label}
+                  </span>
+                </li>
+              )
+            )}
           </ul>
 
-          <div className="mt-auto pt-12 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft">
+          <div data-reveal className="mt-auto pt-12 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft">
             <p className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-accent" />
               {social.status}
@@ -46,7 +65,7 @@ export default function Contact() {
           </div>
         </div>
 
-        <form className="rounded-2xl bg-dark p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:p-10">
+        <form data-reveal className="rounded-2xl bg-dark p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:p-10">
           <div>
             <label
               htmlFor="name"
@@ -103,6 +122,6 @@ export default function Contact() {
           </button>
         </form>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }

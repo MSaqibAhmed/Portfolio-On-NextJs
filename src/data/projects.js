@@ -1,3 +1,6 @@
+// `url` is the live deployment. Leave it null for anything that isn't
+// deployed yet — a card only becomes clickable when it has a real URL, so an
+// unset one never promises a link that goes nowhere.
 export const projects = [
   {
     index: "01",
@@ -5,6 +8,7 @@ export const projects = [
     title: "Fitness Tracker",
     stack: "React • Node.js • Express.js • MongoDB",
     image: "/images/Mockup-4.3.png",
+    url: "https://fitness-tracker-react-seven.vercel.app/",
     featured: false,
   },
   {
@@ -13,6 +17,7 @@ export const projects = [
     title: "Hotel Management System",
     stack: "React • Node.js • Express.js • MongoDB",
     image: "/images/Mockup-1.3.png",
+    url: "https://hotelmanagement-steel.vercel.app/",
     featured: false,
   },
   {
@@ -21,6 +26,7 @@ export const projects = [
     title: "InfinityHub",
     stack: "React • JavaScript • CSS",
     image: "/images/Mockup-3.3.png",
+    url: null,
     featured: false,
   },
   {
@@ -29,6 +35,7 @@ export const projects = [
     title: "Nestora",
     stack: "React • JavaScript • CSS",
     image: "/images/Mockup-5.3.png",
+    url: null,
     featured: false,
   },
 ];

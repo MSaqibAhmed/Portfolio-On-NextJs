@@ -88,6 +88,91 @@ body {
   text-transform: uppercase;
 }
 
+/* The radial menu adopts whichever surface it opens over, reusing the same
+   [data-surface] flag SurfaceObserver already sets for the scrollbar:
+   light section -> light canvas with ink text, dark section -> dark canvas
+   with light text. Channel triples so alpha can be mixed in below. */
+:root {
+  --nav-surface: 255 255 255;
+  --nav-ink: 10 10 10;
+}
+
+html[data-surface="dark"] {
+  --nav-surface: 5 5 5;
+  --nav-ink: 255 255 255;
+}
+
+/* While the menu is open the page scales down; paint the canvas to match so
+   the exposed edge reads as depth rather than a mismatched frame. */
+html[data-nav-open="true"] {
+  background: rgb(var(--nav-surface));
+}
+
+html[data-nav-open="true"] body {
+  background: transparent;
+}
+
+/* Frosted glass rather than a solid fill: the page stays readable through
+   it, and the blur (not opacity) is what separates menu from page. */
+.nav-plate {
+  background: rgb(var(--nav-surface) / 0.62);
+}
+
+/* The blur is applied ONLY while the menu is open. A full-viewport
+   backdrop-filter is one of the most expensive things a browser composites,
+   and leaving it on a permanently-mounted fixed overlay made it cost on
+   every scrolled frame even with the menu closed. Kept modest at 12px too:
+   heavier radii stall paint on mid-range hardware. */
+html[data-nav-open="true"] .nav-plate {
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  backdrop-filter: blur(12px) saturate(130%);
+}
+
+/* Everything inside the overlay inherits this, and the SVG rings pick it up
+   through `stroke="currentColor"`. */
+.nav-fg {
+  color: rgb(var(--nav-ink));
+}
+
+.nav-hairline {
+  border-color: rgb(var(--nav-ink) / 0.15);
+}
+
+.nav-core-dot {
+  background: rgb(var(--nav-ink) / 0.5);
+}
+
+/* What I Do — the technical diagram is fully painted but only visible inside
+   a soft disc that tracks the cursor, so the resting composition stays clean.
+   --mx/--my are driven by GSAP quickSetter. */
+.wid-reveal {
+  --mx: 50%;
+  --my: 50%;
+  -webkit-mask-image: radial-gradient(
+    circle 170px at var(--mx) var(--my),
+    #000 0%,
+    #000 38%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(
+    circle 170px at var(--mx) var(--my),
+    #000 0%,
+    #000 38%,
+    transparent 72%
+  );
+}
+
+/* How I Work — reduced motion: the pinned scrub is skipped, so the stage
+   copy has to leave its absolute stack and read as a normal list. */
+.hiw-static {
+  height: auto;
+}
+
+.hiw-static [data-stage] {
+  position: static;
+  margin-bottom: 2.5rem;
+}
+
 @keyframes scroll-line {
   0%,
   100% {

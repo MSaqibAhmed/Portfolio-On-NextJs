@@ -1,4 +1,5 @@
-import { social } from "@/data/social";
+import { social, isRealLink } from "@/data/social";
+import ScrollReveal from "@/components/ui/ScrollReveal";
 
 const quickLinksA = [
   { label: "Home", href: "#home" },
@@ -16,15 +17,24 @@ const quickLinksB = [
 
 export default function Footer() {
   return (
-    <footer data-surface-dark className="mt-auto overflow-hidden bg-dark text-white">
+    <ScrollReveal
+      as="footer"
+      data-surface-dark
+      className="mt-auto overflow-hidden bg-dark text-white"
+      y={-28}
+      clip
+      stagger={0.12}
+      duration={1.05}
+      start="top 88%"
+    >
       <div className="container-px pt-20">
-        <h2 className="font-display text-[clamp(1.75rem,9vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
+        <h2 data-reveal className="font-display text-[clamp(1.75rem,9vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
           Building Digital
           <br />
           Experiences.
         </h2>
 
-        <div className="mt-16 grid grid-cols-1 gap-8 min-[420px]:grid-cols-2 sm:grid-cols-3 sm:gap-10">
+        <div data-reveal className="mt-16 grid grid-cols-1 gap-8 min-[420px]:grid-cols-2 sm:grid-cols-3 sm:gap-10">
           <div>
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-white/40">
               Quick Links
@@ -75,21 +85,30 @@ export default function Footer() {
                   {social.email}
                 </a>
               </li>
-              <li>
-                <a href={social.github} className="text-white/80 hover:text-white">
-                  GitHub ↗
-                </a>
-              </li>
-              <li>
-                <a href={social.linkedin} className="text-white/80 hover:text-white">
-                  LinkedIn ↗
-                </a>
-              </li>
+              {[
+                { label: "GitHub", href: social.github },
+                { label: "LinkedIn", href: social.linkedin },
+              ].map(({ label, href }) => (
+                <li key={label}>
+                  {isRealLink(href) ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-white/80 hover:text-white"
+                    >
+                      {label} ↗
+                    </a>
+                  ) : (
+                    <span className="text-white/40">{label}</span>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <div className="mt-16 flex items-center justify-between border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
+        <div data-reveal className="mt-16 flex items-center justify-between border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
           <span>© 2026 Saqib Ahmed</span>
           <a href="#home" className="inline-flex items-center gap-1.5 hover:text-white">
             Back to top ↑
@@ -104,6 +123,6 @@ export default function Footer() {
       >
         Saqib Ahmed
       </p>
-    </footer>
+    </ScrollReveal>
   );
 }

@@ -4,9 +4,10 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 }
 
 // Maps `value` from [inMin, inMax] to [outMin, outMax], clamped.
@@ -16,11 +17,11 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
 }
 
 // Scroll-linked hand-off between the Hero portrait and the About portrait:
-// a single traveling element (front = hero.png, back = about.png) tracks
-// between the two images' LIVE rects on every scrub tick. Live reads (rather
-// than a precomputed start/end delta) are required because SmoothScroll
-// (ScrollSmoother) adds its own lag on top of raw scroll, so an element's
-// visual position isn't a fixed function of scrollY alone.
+// a single traveling element (front = hero.png, back = about.png) moves
+// between the two images. Boxes are measured once per ScrollTrigger refresh
+// in DOCUMENT space and converted to viewport space each tick by subtracting
+// the smoother's scroll offset — so the per-tick work is pure transform and
+// never touches layout.
 // Desktop (>=1024px) and motion-safe only — see the matchMedia gate below.
 // Rendered outside #smooth-wrapper/#smooth-content (see page.js) so its
 // `position: fixed` isn't broken by ScrollSmoother's transform.
@@ -52,15 +53,49 @@ export default function HeroAboutTransition() {
 
         gsap.set(overlay, { position: "fixed", top: 0, left: 0 });
 
+        // Both photos live inside #smooth-content, so their positions in
+        // DOCUMENT space are constant — only their viewport position moves,
+        // by exactly the smoother's scroll offset. Measuring once per refresh
+        // (instead of reading two rects every tick) and driving the overlay
+        // with transforms keeps this off the layout path entirely; the old
+        // version read rects and wrote top/left/width/height every frame,
+        // which forced a synchronous reflow on every scroll tick.
+        let heroBox = null;
+        let aboutBox = null;
+
+        const scrollOffset = () => {
+          const s = ScrollSmoother.get?.();
+          return s ? s.scrollTop() : window.scrollY;
+        };
+
+        function measure() {
+          const off = scrollOffset();
+          const h = heroEl.getBoundingClientRect();
+          const a = aboutEl.getBoundingClientRect();
+          heroBox = { top: h.top + off, left: h.left, width: h.width, height: h.height };
+          aboutBox = { top: a.top + off, left: a.left, width: a.width, height: a.height };
+          // The overlay keeps the hero's box as its intrinsic size; every
+          // later size change is expressed as a scale.
+          gsap.set(overlay, { width: heroBox.width, height: heroBox.height });
+        }
+
         function update(progress) {
-          const heroRect = heroEl.getBoundingClientRect();
-          const aboutRect = aboutEl.getBoundingClientRect();
+          if (!heroBox || !aboutBox) return;
+          const { interpolate } = gsap.utils;
+          const off = scrollOffset();
+
+          const top = interpolate(heroBox.top, aboutBox.top, progress) - off;
+          const left = interpolate(heroBox.left, aboutBox.left, progress);
+          const w = interpolate(heroBox.width, aboutBox.width, progress);
+          const h = interpolate(heroBox.height, aboutBox.height, progress);
 
           gsap.set(overlay, {
-            top: gsap.utils.interpolate(heroRect.top, aboutRect.top, progress),
-            left: gsap.utils.interpolate(heroRect.left, aboutRect.left, progress),
-            width: gsap.utils.interpolate(heroRect.width, aboutRect.width, progress),
-            height: gsap.utils.interpolate(heroRect.height, aboutRect.height, progress),
+            x: left,
+            y: top,
+            scaleX: w / heroBox.width,
+            scaleY: h / heroBox.height,
+            transformOrigin: "top left",
+            force3D: true,
           });
           gsap.set(card, { rotateY: mapRange(progress, 0.3, 0.7, 0, 180) });
 
@@ -72,6 +107,7 @@ export default function HeroAboutTransition() {
           gsap.set(aboutEl, { autoAlpha: mapRange(progress, 0.92, 1, 0, 1) });
         }
 
+        measure();
         update(0);
 
         const trigger = ScrollTrigger.create({
@@ -79,20 +115,21 @@ export default function HeroAboutTransition() {
           start: "top top",
           end: "bottom top",
           scrub: 0.6,
+          // Use the instance ScrollTrigger hands us: `onRefresh` fires
+          // synchronously from inside create(), so referencing the outer
+          // `trigger` const here throws a TDZ error and kills this effect.
+          onRefresh: (self) => {
+            measure();
+            update(self.progress);
+          },
           onUpdate: (self) => update(self.progress),
         });
         ScrollTrigger.refresh();
 
-        function handleResize() {
-          ScrollTrigger.refresh();
-          update(trigger.progress);
-        }
-        window.addEventListener("resize", handleResize);
-
         return () => {
-          window.removeEventListener("resize", handleResize);
           trigger.kill();
           gsap.set([heroEl, aboutEl], { clearProps: "opacity,visibility" });
+          gsap.set(overlay, { clearProps: "transform,width,height" });
         };
       }
     );

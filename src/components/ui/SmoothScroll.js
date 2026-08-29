@@ -25,6 +25,10 @@ export default function SmoothScroll() {
     const smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
+      // Seconds the content takes to catch up with the real scroll position.
+      // This is the single biggest lever on perceived scroll speed: 1.5 feels
+      // laggy, ~0.8–1 reads as smooth but responsive. Raise it for a heavier
+      // feel, lower it for a snappier one.
       smooth: 1,
       effects: false,
       normalizeScroll: true,
