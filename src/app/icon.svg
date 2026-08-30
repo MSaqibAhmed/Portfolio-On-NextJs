@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Muhammad Saqib Ahmed monogram">
+  <circle cx="256" cy="256" r="256" fill="#050505" />
+  <g fill="#ffffff">
+    <text
+      x="242"
+      y="270"
+      font-family="Georgia, 'Times New Roman', 'Playfair Display', serif"
+      font-size="286"
+      font-weight="400"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      letter-spacing="-34"
+    >SA</text>
+  </g>
+  <path d="M362 118 L150 402" stroke="#ffffff" stroke-width="9" stroke-linecap="round" fill="none" />
+</svg>

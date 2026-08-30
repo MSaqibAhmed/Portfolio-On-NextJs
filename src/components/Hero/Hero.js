@@ -7,9 +7,10 @@ import gsap from "gsap";
 const ACCENT = "#00ff9d";
 
 // Both headlines share one scale so the composition stays proportional.
-// 13vw keeps the widest word ("FULL-STACK") inside the viewport at every
-// width; the rem floor/ceiling stop it collapsing or exploding at extremes.
-const HEADLINE = "text-[clamp(1.75rem,13vw,9rem)]";
+// 11.5vw keeps the widest word ("FULL-STACK") inside the viewport at every
+// width with a comfortable margin on phones; the rem floor/ceiling stop it
+// collapsing or exploding at extremes.
+const HEADLINE = "text-[clamp(1.5rem,11.5vw,9rem)]";
 
 export default function Hero() {
   const heroRef = useRef(null);
@@ -95,12 +96,21 @@ export default function Hero() {
           em-based negative margins, which scale with the headline size
           instead of drifting at different viewport heights. */}
       <div className="flex flex-1 flex-col items-center justify-center py-4">
-        <h1
+        {/* The visible headline is split around the portrait, so the two
+            display words can't be one element. The page's single H1 carries
+            the whole phrase for assistive tech and search engines; the
+            display words are decorative duplicates of it. */}
+        <h1 className="sr-only">
+          Muhammad Saqib Ahmed — Full-Stack Developer
+        </h1>
+
+        <div
+          aria-hidden="true"
           ref={fullStackRef}
           className={`${HEADLINE} relative z-10 select-none whitespace-nowrap text-center font-display font-black uppercase leading-[0.78] tracking-[-0.055em]`}
         >
           Full-Stack
-        </h1>
+        </div>
 
         <div
           ref={portraitRef}
@@ -142,12 +152,13 @@ export default function Hero() {
 
         {/* Sits in front of the portrait, overlapping the scrimmed lower
             edge so the word stays whole and readable. */}
-        <h2
+        <div
+          aria-hidden="true"
           ref={developerRef}
           className={`${HEADLINE} relative z-20 -mt-[0.3em] select-none whitespace-nowrap text-center font-display font-black uppercase leading-[0.78] tracking-[-0.055em]`}
         >
           Developer
-        </h2>
+        </div>
 
         <div
           ref={scrollRef}

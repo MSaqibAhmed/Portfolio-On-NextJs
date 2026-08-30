@@ -71,6 +71,19 @@ body {
    creating a scroll container. */
 html {
   overflow-x: clip;
+
+  /* Reserve the scrollbar gutter permanently. Without it, every scroll lock
+     (the intro overlay, the radial menu) removes the scrollbar and the whole
+     centred layout — navbar included — jumps sideways by half its width. */
+  scrollbar-gutter: stable;
+}
+
+/* Scroll lock while the intro plays. Driven by an attribute rather than an
+   inline style: <html>'s style attribute is also written by ScrollTrigger
+   (scroll-behavior), which was clobbering an inline lock. */
+html[data-loading="true"],
+html[data-loading="true"] body {
+  overflow: hidden;
 }
 
 .sr-only-focusable {

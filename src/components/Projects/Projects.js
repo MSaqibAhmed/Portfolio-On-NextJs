@@ -14,7 +14,7 @@ export default function Projects() {
       stagger={0.1}
     >
       <div data-reveal className="flex items-end justify-between gap-6">
-        <h2 className="font-sans text-[clamp(1.75rem,9vw,3.75rem)] font-extrabold tracking-tight">
+        <h2 className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight">
           Featured Projects
         </h2>
         <a

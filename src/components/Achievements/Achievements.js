@@ -48,10 +48,10 @@ function LargeItem({ item }) {
         {item.index}
       </span>
       <div className="mt-2 flex flex-wrap items-baseline gap-3 sm:gap-4">
-        <h3 className="font-display text-4xl font-semibold uppercase leading-none sm:text-5xl">
+        <h3 className="font-display text-3xl font-semibold uppercase leading-none sm:text-5xl">
           {item.title}
         </h3>
-        <span className="font-display text-2xl font-medium text-ink-soft sm:text-3xl">
+        <span className="font-display text-xl font-medium text-ink-soft sm:text-3xl">
           {item.year}
         </span>
       </div>
@@ -80,10 +80,10 @@ function CompactItem({ item }) {
         <span data-num className="text-xs text-ink-soft">
           {item.index}
         </span>
-        <h3 className="font-display text-2xl font-medium uppercase sm:text-3xl">
+        <h3 className="font-display text-xl font-medium uppercase sm:text-3xl">
           {item.title}
         </h3>
-        <span className="font-display text-xl font-medium text-ink-soft sm:text-2xl">
+        <span className="font-display text-lg font-medium text-ink-soft sm:text-2xl">
           {item.year}
         </span>
       </div>
@@ -281,7 +281,7 @@ export default function Achievements() {
     >
       <h2
         data-heading
-        className="font-sans text-[clamp(1.75rem,9vw,3.75rem)] font-extrabold tracking-tight"
+        className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight"
       >
         Achievements
       </h2>

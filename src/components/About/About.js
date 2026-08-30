@@ -18,10 +18,10 @@ export default function About() {
       <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8 lg:gap-12">
         <div>
           <p data-reveal className="section-eyebrow text-ink-soft">About Muhammad Saqib Ahmed</p>
-          <h2 data-reveal className="mt-4 font-sans text-[clamp(1.75rem,9vw,3.75rem)] font-extrabold tracking-tight">
+          <h2 data-reveal className="mt-4 font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight">
             Hey!
           </h2>
-          <p data-reveal className="mt-6 text-xl font-semibold leading-snug sm:text-2xl">
+          <p data-reveal className="mt-6 text-lg font-semibold leading-snug sm:text-2xl">
             I&rsquo;m Saqib, a Full-Stack Developer based in Pakistan, focused
             on building modern web applications and digital experiences with
             the MERN stack.
@@ -36,7 +36,7 @@ export default function About() {
           >
             <Image
               src="/images/about.png"
-              alt="Saqib Ahmed"
+              alt="Portrait of Muhammad Saqib Ahmed"
               fill
               sizes="(min-width: 768px) 340px, 100vw"
               className="object-cover object-center grayscale"

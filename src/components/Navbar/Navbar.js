@@ -654,11 +654,6 @@ export default function Navbar() {
     [close]
   );
 
-  // Label shown in the pill on phones — falls back to the wordmark before
-  // the spy has settled on a section.
-  const activeLabel =
-    activeIndex >= 0 && navMenu[activeIndex] ? navMenu[activeIndex].label : "Saqib Ahmed";
-
   const previewItem = hovered >= 0 ? navMenu[hovered] : null;
 
   return (
@@ -671,12 +666,10 @@ export default function Navbar() {
         >
           <span
             ref={brandWrapRef}
+            data-navbar-wordmark
             className="overflow-hidden whitespace-nowrap font-display text-[0.65rem] font-medium uppercase tracking-[0.3em] text-white sm:text-xs"
           >
-            {/* On phones the pill is the only wayfinding on screen, so it
-                names the section you're in. Desktop keeps the wordmark. */}
-            <span className="sm:hidden">{activeLabel}</span>
-            <span className="hidden sm:inline">Saqib Ahmed</span>
+            Saqib Ahmed
           </span>
           <span aria-hidden className="h-4 w-px shrink-0 bg-white/15" />
           <button
@@ -686,7 +679,7 @@ export default function Navbar() {
             aria-expanded={open}
             aria-controls="radial-nav"
             aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-            className="group relative flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none ring-offset-2 ring-offset-[#050505] focus-visible:ring-2 focus-visible:ring-white/70"
+            className="group relative flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none ring-offset-2 ring-offset-[#050505] before:absolute before:-inset-2.5 before:content-[''] focus-visible:ring-2 focus-visible:ring-white/70"
           >
             {/* Absolutely positioned so animating `width` into the X arms
                 can't reflow them — flex items would drift apart and the

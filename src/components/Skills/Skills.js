@@ -316,7 +316,7 @@ export default function Skills() {
     >
       <h2
         data-heading
-        className="font-sans text-[clamp(1.75rem,9vw,3.75rem)] font-extrabold tracking-tight"
+        className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight"
       >
         Tech Stack
       </h2>

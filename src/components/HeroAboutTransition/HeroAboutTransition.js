@@ -15,6 +15,12 @@ function mapRange(value, inMin, inMax, outMin, outMax) {
   return outMin + (outMax - outMin) * t;
 }
 
+// Shaping curves for the hand-off. `power1.inOut` on the travel keeps the
+// motion tied to the scroll while softening both ends; the spin gets a
+// gentler curve still so the card turn reads as the slowest part.
+const easeTravel = gsap.parseEase("power1.inOut");
+const easeSpin = gsap.parseEase("power2.inOut");
+
 // Scroll-linked hand-off between the Hero portrait and the About portrait:
 // a single traveling element (front = hero.png, back = about.png) moves
 // between the two images. Boxes are measured once per ScrollTrigger refresh
@@ -81,10 +87,17 @@ export default function HeroAboutTransition() {
           const { interpolate } = gsap.utils;
           const off = scrollOffset();
 
-          const top = interpolate(heroBox.top, aboutBox.top, progress) - off;
-          const left = interpolate(heroBox.left, aboutBox.left, progress);
-          const w = interpolate(heroBox.width, aboutBox.width, progress);
-          const h = interpolate(heroBox.height, aboutBox.height, progress);
+          // Eased rather than linear so the card sets off and settles gently
+          // instead of tracking the wheel one-to-one. Both curves still return
+          // 0 at 0 and 1 at 1, so the overlay still lands exactly on the About
+          // portrait.
+          const travel = easeTravel(progress);
+          const spin = easeSpin(progress);
+
+          const top = interpolate(heroBox.top, aboutBox.top, travel) - off;
+          const left = interpolate(heroBox.left, aboutBox.left, travel);
+          const w = interpolate(heroBox.width, aboutBox.width, travel);
+          const h = interpolate(heroBox.height, aboutBox.height, travel);
 
           gsap.set(overlay, {
             x: left,
@@ -94,7 +107,9 @@ export default function HeroAboutTransition() {
             transformOrigin: "top left",
             force3D: true,
           });
-          gsap.set(card, { rotateY: mapRange(progress, 0.3, 0.7, 0, 180) });
+          // Spread over most of the scroll range (was 0.3–0.7) so the turn is
+          // noticeably slower and easier to read.
+          gsap.set(card, { rotateY: mapRange(spin, 0.16, 0.84, 0, 180) });
 
           const overlayIn = mapRange(progress, 0, 0.08, 0, 1);
           const overlayOut = 1 - mapRange(progress, 0.92, 1, 0, 1);
@@ -111,7 +126,10 @@ export default function HeroAboutTransition() {
           trigger: heroSection,
           start: "top top",
           end: "bottom top",
-          scrub: 0.6,
+          // Heavier smoothing: the overlay eases toward the scroll position
+          // over ~1.4s instead of snapping to it, which is what reads as
+          // "smooth" on a trackpad or a flicked phone scroll.
+          scrub: 1.4,
           // Use the instance ScrollTrigger hands us: `onRefresh` fires
           // synchronously from inside create(), so referencing the outer
           // `trigger` const here throws a TDZ error and kills this effect.

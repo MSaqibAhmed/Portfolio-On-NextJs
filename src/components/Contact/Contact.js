@@ -1,11 +1,11 @@
 import { ArrowUpRight } from "lucide-react";
 import { social, isRealLink } from "@/data/social";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import EmailLink from "@/components/ui/EmailLink";
 
 const links = [
   { label: "GitHub", href: social.github },
   { label: "LinkedIn", href: social.linkedin },
-  { label: "Email", href: `mailto:${social.email}` },
 ];
 
 export default function Contact() {
@@ -22,7 +22,7 @@ export default function Contact() {
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col">
           <p data-reveal className="section-eyebrow text-ink-soft">04 / Connect</p>
-          <h2 data-reveal className="mt-4 font-sans text-[clamp(2.25rem,11vw,4.5rem)] font-extrabold leading-[0.95] tracking-tight">
+          <h2 data-reveal className="mt-4 font-sans text-[clamp(1.875rem,9vw,4.5rem)] font-extrabold uppercase leading-[0.95] tracking-tight">
             Let&rsquo;s
             <br />
             Talk.
@@ -54,6 +54,15 @@ export default function Contact() {
                 </li>
               )
             )}
+            <li>
+              <EmailLink
+                email={social.email}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em]"
+              >
+                Email
+                <ArrowUpRight className="h-4 w-4" />
+              </EmailLink>
+            </li>
           </ul>
 
           <div data-reveal className="mt-auto pt-12 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft">

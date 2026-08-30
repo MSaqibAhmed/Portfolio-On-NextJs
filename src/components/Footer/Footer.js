@@ -1,6 +1,7 @@
 import { social, isRealLink } from "@/data/social";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import SectionLink from "@/components/ui/SectionLink";
+import EmailLink from "@/components/ui/EmailLink";
 
 const quickLinksA = [
   { label: "Home", href: "#home" },
@@ -27,7 +28,7 @@ export default function Footer() {
       start="top 88%"
     >
       <div className="container-px pt-20">
-        <h2 data-reveal className="font-display text-[clamp(1.75rem,9vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
+        <h2 data-reveal className="font-display text-[clamp(1.5rem,7.5vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
           Building Digital
           <br />
           Experiences.
@@ -42,7 +43,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 {quickLinksA.map((link) => (
                   <li key={link.href}>
-                    <SectionLink href={link.href} className="text-white/80 hover:text-white">
+                    <SectionLink href={link.href} className="inline-block py-1 text-white/80 hover:text-white">
                       {link.label}
                     </SectionLink>
                   </li>
@@ -51,7 +52,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 {quickLinksB.map((link) => (
                   <li key={link.href}>
-                    <SectionLink href={link.href} className="text-white/80 hover:text-white">
+                    <SectionLink href={link.href} className="inline-block py-1 text-white/80 hover:text-white">
                       {link.label}
                     </SectionLink>
                   </li>
@@ -80,9 +81,9 @@ export default function Footer() {
             </p>
             <ul className="mt-5 space-y-3 text-sm">
               <li>
-                <a href={`mailto:${social.email}`} className="break-all text-white/80 hover:text-white">
+                <EmailLink email={social.email} className="break-all text-white/80 hover:text-white">
                   {social.email}
-                </a>
+                </EmailLink>
               </li>
               {[
                 { label: "GitHub", href: social.github },
@@ -118,7 +119,7 @@ export default function Footer() {
       <p
         aria-hidden
         className="select-none pl-[clamp(1.25rem,4vw,3.5rem)] font-display font-semibold uppercase leading-[0.8] text-white/[0.06]"
-        style={{ fontSize: "clamp(2rem, 14vw, 13rem)" }}
+        style={{ fontSize: "clamp(1.75rem, 12vw, 13rem)" }}
       >
         Saqib Ahmed
       </p>
