@@ -11,7 +11,7 @@ function CardBody({ project, live }) {
             src={project.image}
             alt={`${project.title} — project preview`}
             fill
-            sizes="(min-width: 768px) 50vw, 100vw"
+            sizes="min(100vw, 46rem)"
             className="object-cover object-center transition-transform duration-[700ms] ease-out group-hover:scale-[1.035]"
           />
         ) : (
@@ -26,7 +26,7 @@ function CardBody({ project, live }) {
         {project.index} / {project.category}
       </p>
 
-      <h3 className="mt-1 flex items-center gap-2 text-xl font-bold sm:text-2xl">
+      <h3 className="mt-1 flex items-center gap-2 text-[clamp(1.25rem,1.9vw,1.5rem)] font-bold">
         <span className="transition-transform duration-500 ease-out group-hover:translate-x-1">
           {project.title}
         </span>

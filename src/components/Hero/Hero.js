@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
+import { onIntroReady, prefersReducedMotion } from "@/lib/motion";
 
 const ACCENT = "#00ff9d";
 
@@ -24,55 +25,79 @@ export default function Hero() {
 
   useLayoutEffect(() => {
     const hero = heroRef.current;
-    if (!hero) return;
+    if (!hero) return undefined;
+    if (prefersReducedMotion()) return undefined;
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const parts = [
+      metaRef.current,
+      fullStackRef.current,
+      portraitRef.current,
+      developerRef.current,
+      accentRef.current,
+      diamondRef.current,
+      scrollRef.current,
+    ].filter(Boolean);
 
-    const ctx = gsap.context(() => {
-      if (reduceMotion) return;
+    // Hidden before paint, revealed by the timeline below. The timeline is
+    // built only once the intro panel starts wiping off — previously it ran
+    // at mount, which meant the entire hero entrance played out and finished
+    // behind an opaque black overlay. Nobody ever saw it.
+    gsap.set(parts, { opacity: 0 });
 
-      gsap
-        .timeline({ defaults: { ease: "power3.out" } })
-        .fromTo(
-          fullStackRef.current,
-          { y: 50, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.9 }
-        )
-        .fromTo(
-          portraitRef.current,
-          { y: 25, scale: 0.96, opacity: 0 },
-          { y: 0, scale: 1, opacity: 1, duration: 0.8 },
-          "-=0.55"
-        )
-        .fromTo(
-          developerRef.current,
-          { y: 55, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.9 },
-          "-=0.6"
-        )
-        .fromTo(
-          metaRef.current,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.7 },
-          "-=0.55"
-        )
-        .fromTo(
-          [accentRef.current, diamondRef.current],
-          { opacity: 0, scale: 0.6 },
-          { opacity: 1, scale: 1, duration: 0.5, stagger: 0.08 },
-          "-=0.45"
-        )
-        .fromTo(
-          scrollRef.current,
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 0.5 },
-          "-=0.25"
-        );
-    }, hero);
+    let ctx = null;
 
-    return () => ctx.revert();
+    const build = () => {
+      ctx = gsap.context(() => {
+        gsap
+          .timeline({ defaults: { ease: "power3.out" } })
+          .fromTo(
+            fullStackRef.current,
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9 }
+          )
+          .fromTo(
+            portraitRef.current,
+            { y: 25, scale: 0.96, opacity: 0 },
+            { y: 0, scale: 1, opacity: 1, duration: 0.8 },
+            "-=0.55"
+          )
+          .fromTo(
+            developerRef.current,
+            { y: 55, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9 },
+            "-=0.6"
+          )
+          .fromTo(
+            metaRef.current,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.7 },
+            "-=0.55"
+          )
+          .fromTo(
+            [accentRef.current, diamondRef.current],
+            { opacity: 0, scale: 0.6 },
+            { opacity: 1, scale: 1, duration: 0.5, stagger: 0.08 },
+            "-=0.45"
+          )
+          .fromTo(
+            scrollRef.current,
+            { opacity: 0, y: 10 },
+            { opacity: 1, y: 0, duration: 0.5 },
+            "-=0.25"
+          );
+      }, hero);
+    };
+
+    const cancelIntro = onIntroReady(build);
+
+    return () => {
+      cancelIntro();
+      ctx?.revert();
+      // revert() puts back the pre-timeline inline styles, which here are the
+      // hidden state above — clear them so a remount can never leave the hero
+      // blank.
+      gsap.set(parts, { clearProps: "opacity,transform" });
+    };
   }, []);
 
   return (
@@ -86,7 +111,7 @@ export default function Hero() {
           headline the way absolute percentage positioning did. */}
       <div
         ref={metaRef}
-        className="container-px flex items-start justify-between gap-4 pt-20 text-[9px] font-medium uppercase tracking-[0.16em] text-white/55 sm:pt-24 sm:text-[10px] sm:tracking-[0.18em]"
+        className="container-px flex items-start justify-between gap-4 pt-[clamp(5rem,9vh,6.5rem)] text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.17em] text-white/55"
       >
         <span>/ MERN Stack</span>
         <span className="text-right">/ Based in Pakistan</span>
@@ -123,7 +148,7 @@ export default function Hero() {
               alt="Saqib Ahmed — Full-Stack Developer"
               fill
               priority
-              sizes="(min-width: 768px) 300px, 58vw"
+              sizes="min(58vw, 300px)"
               className="object-cover object-center grayscale"
             />
             {/* Scrim: fades the photo into the black backdrop so the
@@ -135,18 +160,20 @@ export default function Hero() {
             />
           </div>
 
-          {/* Accent dot — offset as a share of the portrait width so it
-              tracks the image instead of running off small screens. */}
+          {/* Accent dot and diamond — offset as a share of the portrait's own
+              width, so they track the image at every size. Both offsets stay
+              inside the viewport even at the portrait's widest (58vw), which
+              is why neither needs a breakpoint to hide it any more. */}
           <span
             ref={accentRef}
-            className="absolute left-[-16%] top-[8%] hidden h-2 w-2 rounded-full min-[420px]:block"
+            className="absolute left-[-16%] top-[8%] block h-2 w-2 rounded-full"
             style={{ backgroundColor: ACCENT }}
           />
 
           <span
             ref={diamondRef}
             aria-hidden="true"
-            className="absolute right-[-28%] top-1/2 hidden h-[15px] w-[15px] -translate-y-1/2 rotate-45 border border-white/15 lg:block"
+            className="absolute right-[-14%] top-1/2 block h-[15px] w-[15px] -translate-y-1/2 rotate-45 border border-white/15"
           />
         </div>
 
@@ -162,17 +189,17 @@ export default function Hero() {
 
         <div
           ref={scrollRef}
-          className="mt-8 flex flex-col items-center gap-3 sm:mt-10"
+          className="mt-[clamp(2rem,4vh,2.5rem)] flex flex-col items-center gap-3"
         >
-          <span className="whitespace-nowrap text-[9px] font-medium uppercase tracking-[0.18em] text-white/55 sm:text-[10px]">
+          <span className="whitespace-nowrap text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.18em] text-white/55">
             Scroll to explore ↓
           </span>
-          <span className="h-7 w-px animate-scroll-line bg-white/25 sm:h-9" />
+          <span className="h-[clamp(1.75rem,3vh,2.25rem)] w-px animate-scroll-line bg-white/25" />
         </div>
       </div>
 
       {/* BOTTOM BAR — flex row that wraps instead of overlapping. */}
-      <div className="container-px flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pb-7 text-[9px] font-medium uppercase tracking-[0.14em] text-white/50 sm:pb-9 sm:text-[10px] sm:tracking-[0.18em]">
+      <div className="container-px flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pb-[clamp(1.75rem,4vh,2.25rem)] text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.16em] text-white/50">
         <span>© 2026 Saqib Ahmed</span>
         <span className="text-right">/ Available for opportunities</span>
       </div>

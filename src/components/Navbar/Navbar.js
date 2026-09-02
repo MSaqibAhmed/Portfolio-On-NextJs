@@ -11,28 +11,54 @@ const DEG = Math.PI / 180;
 // Sections the radial menu points at, for scroll-spy.
 const SECTION_IDS = navMenu.map((item) => item.href.slice(1));
 
+// Half the widest item label (min-w-9rem = 144px) plus a breathing margin,
+// and roughly half an item's height plus the same margin. These are what the
+// ring has to clear, so they are what the radius is solved against.
+const LABEL_HALF = 88;
+const ITEM_TALL = 88;
+
+// Clearance kept between the ring and both the trigger pill above it and the
+// bottom edge below it.
+const EDGE_GAP = 14;
+
+const COS30 = Math.cos(30 * DEG);
+
 /**
  * Target position for every item, in pixels relative to the composition
- * centre. The ring is the same on every breakpoint — only the radius
- * shrinks — so the orbital motion and the whole interaction survive down to
- * phone widths instead of degrading into a plain list.
+ * centre. The ring is the same everywhere — only the radius changes — so the
+ * orbital motion and the whole interaction survive down to phone widths
+ * instead of degrading into a plain list.
  *
- * The mobile radius is bound by the widest label: an item at ±30° sits at
- * 0.866R horizontally, so 0.866R + half the label width has to stay inside
- * the viewport.
+ * The radius is solved from the constraints rather than picked per
+ * breakpoint, so one continuous curve covers a 320px phone through a 5K
+ * display with no width test to put a window on the wrong branch:
+ *
+ *   horizontally  an item at ±30° sits at 0.866R from centre, so
+ *                 0.866R + half a label has to stay inside the viewport;
+ *   vertically    the items at ±90° sit a full R away, and the band they get
+ *                 is not the whole viewport — the trigger pill is fixed at
+ *                 the top and paints ABOVE this overlay (it is the close
+ *                 button, so it has to). The band therefore starts below the
+ *                 pill, and the composition is centred in that band rather
+ *                 than in the viewport. Without this the 12 o'clock item
+ *                 slid underneath the pill and simply vanished.
  */
-function computeLayout() {
+function computeLayout(navBottom, itemHeight) {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const isMobile = w < 768;
 
-  const radius = isMobile
-    ? Math.min(w * 0.36, h * 0.26, 160)
-    : Math.min(w * 0.3, h * 0.34, 320);
+  const bandTop = navBottom + EDGE_GAP;
+  const bandBottom = h - EDGE_GAP;
+  const bandCentre = (bandTop + bandBottom) / 2;
+
+  const maxByWidth = (w / 2 - LABEL_HALF) / COS30;
+  const maxByHeight = (bandBottom - bandTop) / 2 - itemHeight / 2;
+  const radius = Math.max(72, Math.min(maxByWidth, maxByHeight, 320));
 
   return {
-    isMobile,
     radius,
+    // How far the whole composition sits from the viewport's own centre.
+    centreOffset: bandCentre - h / 2,
     points: navMenu.map((_, i) => ({
       x: Math.cos(NAV_ANGLES[i] * DEG) * radius,
       y: Math.sin(NAV_ANGLES[i] * DEG) * radius,
@@ -46,12 +72,14 @@ export default function Navbar() {
   const [hovered, setHovered] = useState(-1);
 
   // DOM
+  const headerRef = useRef(null);
   const pillRef = useRef(null);
   const brandWrapRef = useRef(null);
   const triggerRef = useRef(null);
   const dotRefs = useRef([]);
   const overlayRef = useRef(null);
   const plateRef = useRef(null);
+  const centreRef = useRef(null);
   const ringWrapRef = useRef(null);
   const ringSpinRef = useRef(null);
   const coreRef = useRef(null);
@@ -102,8 +130,28 @@ export default function Navbar() {
   }, []);
 
   const applyLayout = useCallback(() => {
-    const layout = computeLayout();
+    // Measured, not assumed: the pill's height moves with its fluid padding
+    // and the item's with its fluid label, so both are read from the DOM and
+    // only fall back to a constant before the first paint.
+    const navBottom = headerRef.current
+      ? headerRef.current.getBoundingClientRect().bottom
+      : 0;
+    const firstItem = magnetRefs.current[0];
+    const itemHeight = firstItem?.offsetHeight || ITEM_TALL;
+
+    const layout = computeLayout(navBottom, itemHeight);
     layoutRef.current = layout;
+
+    // The ring no longer sits at the viewport's centre (it is centred in the
+    // band below the trigger pill), so everything that belongs to the same
+    // composition has to move with it — otherwise the hover preview reads as
+    // floating above the circle instead of sitting inside it.
+    if (centreRef.current) {
+      gsap.set(centreRef.current, { y: layout.centreOffset });
+    }
+    if (previewRef.current) {
+      gsap.set(previewRef.current, { y: layout.centreOffset });
+    }
 
     layout.points.forEach((pt, i) => {
       // Centre each slot on its orbit point through GSAP's own xPercent /
@@ -658,16 +706,19 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center pt-4 sm:pt-5">
+      <header
+        ref={headerRef}
+        className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center pt-[clamp(1rem,1.6vw,1.25rem)]"
+      >
         <nav
           ref={pillRef}
           aria-label="Primary"
-          className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-dark px-5 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-[0_10px_38px_rgba(0,0,0,0.6)] sm:px-6 sm:py-3"
+          className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-dark shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-[0_10px_38px_rgba(0,0,0,0.6)] px-[clamp(1.25rem,2vw,1.5rem)] py-[clamp(0.625rem,1vw,0.75rem)]"
         >
           <span
             ref={brandWrapRef}
             data-navbar-wordmark
-            className="overflow-hidden whitespace-nowrap font-display text-[0.65rem] font-medium uppercase tracking-[0.3em] text-white sm:text-xs"
+            className="overflow-hidden whitespace-nowrap font-display text-[clamp(0.65rem,0.9vw,0.75rem)] font-medium uppercase tracking-[0.3em] text-white"
           >
             Saqib Ahmed
           </span>
@@ -724,7 +775,7 @@ export default function Navbar() {
           </span>
         </div>
 
-        <div className="absolute left-1/2 top-1/2 h-0 w-0">
+        <div ref={centreRef} className="absolute left-1/2 top-1/2 h-0 w-0">
           {/* Orbit rings */}
           <div
             ref={ringWrapRef}
@@ -775,7 +826,7 @@ export default function Navbar() {
           <div
             ref={coreRef}
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 hidden opacity-0 md:block"
+            className="pointer-events-none absolute left-1/2 top-1/2 block opacity-0"
           >
             <span className="nav-hairline block h-[46px] w-[46px] rounded-full border" />
             <span className="nav-core-dot absolute left-1/2 top-1/2 block h-[5px] w-[5px] -translate-x-1/2 -translate-y-1/2 rounded-full" />

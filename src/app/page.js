@@ -7,6 +7,7 @@ import Achievements from "@/components/Achievements/Achievements";
 import Contact from "@/components/Contact/Contact";
 import Footer from "@/components/Footer/Footer";
 import SurfaceObserver from "@/components/ui/SurfaceObserver";
+import MotionSync from "@/components/ui/MotionSync";
 import HeroAboutTransition from "@/components/HeroAboutTransition/HeroAboutTransition";
 import PortalLoader from "@/components/PortalLoader/PortalLoader";
 
@@ -14,6 +15,7 @@ export default function Home() {
   return (
     <>
       <PortalLoader />
+      <MotionSync />
       <SurfaceObserver />
       <Navbar />
       <HeroAboutTransition />

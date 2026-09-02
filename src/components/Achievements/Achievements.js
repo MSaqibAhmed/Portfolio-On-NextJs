@@ -4,6 +4,15 @@ import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { achievements } from "@/data/achievements";
+import {
+  REVEAL_START,
+  canHover,
+  isOnScreen,
+  onIntroReady,
+  prefersReducedMotion,
+  revealFailsafe,
+  scheduleRefresh,
+} from "@/lib/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -47,11 +56,11 @@ function LargeItem({ item }) {
       <span data-num className="text-xs text-ink-soft">
         {item.index}
       </span>
-      <div className="mt-2 flex flex-wrap items-baseline gap-3 sm:gap-4">
-        <h3 className="font-display text-3xl font-semibold uppercase leading-none sm:text-5xl">
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-[clamp(0.75rem,1.5vw,1rem)] gap-y-2">
+        <h3 className="font-display text-[clamp(1.875rem,4vw,3rem)] font-semibold uppercase leading-none">
           {item.title}
         </h3>
-        <span className="font-display text-xl font-medium text-ink-soft sm:text-3xl">
+        <span className="font-display text-[clamp(1.25rem,2.5vw,1.875rem)] font-medium text-ink-soft">
           {item.year}
         </span>
       </div>
@@ -64,7 +73,7 @@ function LargeItem({ item }) {
             {item.badge}
           </span>
         ) : null}
-        <p className="text-sm text-ink-soft sm:text-base">{item.description}</p>
+        <p className="text-[clamp(0.875rem,1.1vw,1rem)] text-ink-soft">{item.description}</p>
       </div>
     </div>
   );
@@ -74,20 +83,20 @@ function CompactItem({ item }) {
   return (
     <div
       data-item
-      className="relative flex flex-col gap-3 overflow-hidden border-b border-line py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+      className="relative flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 overflow-hidden border-b border-line py-6"
     >
       <div className="flex items-baseline gap-3">
         <span data-num className="text-xs text-ink-soft">
           {item.index}
         </span>
-        <h3 className="font-display text-xl font-medium uppercase sm:text-3xl">
+        <h3 className="font-display text-[clamp(1.25rem,2.5vw,1.875rem)] font-medium uppercase">
           {item.title}
         </h3>
-        <span className="font-display text-lg font-medium text-ink-soft sm:text-2xl">
+        <span className="font-display text-[clamp(1.125rem,2vw,1.5rem)] font-medium text-ink-soft">
           {item.year}
         </span>
       </div>
-      <p className="text-sm text-ink-soft sm:max-w-xs sm:text-right">
+      <p className="max-w-[38ch] text-[clamp(0.875rem,1.1vw,1rem)] text-ink-soft">
         {item.description}
       </p>
     </div>
@@ -104,172 +113,206 @@ export default function Achievements() {
     // The giant display type above this section is webfont-sized, so its
     // height settles after mount; without a refresh these triggers keep
     // start/end values measured against the wrong layout.
-    const refresh = () => ScrollTrigger.refresh();
-    const rafId = requestAnimationFrame(refresh);
-    if (document.fonts?.ready) document.fonts.ready.then(refresh);
+    scheduleRefresh();
+    if (document.fonts?.ready) document.fonts.ready.then(scheduleRefresh);
 
-    const ctx = gsap.context(() => {
-      const q = gsap.utils.selector(root);
-      const heading = q("[data-heading]");
-      const lede = q("[data-lede]");
-      const rule = q("[data-rule]");
-      const items = q("[data-item]");
+    let ctx = null;
+    let cancelFailsafe = () => {};
+    const cleanups = [];
 
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const build = () => {
+      ctx = gsap.context(() => {
+        const q = gsap.utils.selector(root);
+        const heading = q("[data-heading]");
+        const lede = q("[data-lede]");
+        const rule = q("[data-rule]");
+        const items = q("[data-item]");
 
-      if (reduce) {
-        // Content stays fully visible; no movement at all.
-        gsap.set([heading, lede, ...items], { opacity: 1, x: 0, y: 0, skewX: 0, rotate: 0, scale: 1 });
-        gsap.set(rule, { scaleX: 1 });
-        gsap.set(q("[data-accent]"), { scaleX: 1 });
-        gsap.set(q("[data-badge]"), { opacity: 1, scale: 1 });
-        return;
-      }
+        const reduce = prefersReducedMotion();
 
-      const mm = gsap.matchMedia();
-
-      mm.add(
-        { isDesktop: "(min-width: 768px)", isMobile: "(max-width: 767px)" },
-        (context) => {
-          const { isDesktop } = context.conditions;
-
-          // Mobile gets shorter travel and no skew/rotation — at phone widths
-          // those read as wobble rather than craft.
-          const headX = isDesktop ? -80 : -32;
-          const headSkew = isDesktop ? -6 : 0;
-          const itemY = isDesktop ? 80 : 38;
-          const itemRot = isDesktop ? 2 : 0;
-
-          gsap
-            .timeline({
-              defaults: { ease: "power3.out" },
-              scrollTrigger: { trigger: root, start: "top 78%", once: true },
-            })
-            .fromTo(
-              heading,
-              { x: headX, opacity: 0, skewX: headSkew },
-              { x: 0, opacity: 1, skewX: 0, duration: 1.15 },
-              0
-            )
-            .fromTo(lede, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.8 }, 0.18)
-            .fromTo(rule, { scaleX: 0 }, { scaleX: 1, duration: 1, ease: "expo.out" }, 0.28);
-
-          // Each item reveals as it reaches the viewport, in sequence.
-          gsap.set(items, { opacity: 0, y: itemY, rotate: itemRot, scale: 0.97 });
-
-          const batch = ScrollTrigger.batch(items, {
-            start: "top 88%",
-            once: true,
-            onEnter: (elements) => {
-              gsap.to(elements, {
-                opacity: 1,
-                y: 0,
-                rotate: 0,
-                scale: 1,
-                duration: 1.05,
-                ease: "power3.out",
-                stagger: 0.12,
-              });
-
-              elements.forEach((el, i) => {
-                const at = i * 0.12;
-
-                // Numbers tick up to their label (00 -> 01), no flourish.
-                const num = el.querySelector("[data-num]");
-                if (num) {
-                  const target = parseInt(num.textContent, 10);
-                  if (!Number.isNaN(target)) {
-                    const proxy = { v: 0 };
-                    gsap.to(proxy, {
-                      v: target,
-                      duration: 0.9,
-                      delay: at,
-                      ease: "power2.out",
-                      onUpdate: () => {
-                        num.textContent = String(Math.round(proxy.v)).padStart(2, "0");
-                      },
-                      onComplete: () => {
-                        num.textContent = String(target).padStart(2, "0");
-                      },
-                    });
-                  }
-                }
-
-                if (el.dataset.winner !== "true") return;
-
-                // Winner emphasis: the rule draws in, the badge settles, and a
-                // single quiet sweep passes across the row.
-                const accent = el.querySelector("[data-accent]");
-                const badge = el.querySelector("[data-badge]");
-                const sweep = el.querySelector("[data-sweep]");
-
-                if (accent) {
-                  gsap.fromTo(
-                    accent,
-                    { scaleX: 0 },
-                    { scaleX: 1, duration: 1.1, delay: at + 0.15, ease: "expo.out" }
-                  );
-                }
-                if (badge) {
-                  gsap.fromTo(
-                    badge,
-                    { scale: 0.8, opacity: 0 },
-                    { scale: 1, opacity: 1, duration: 0.6, delay: at + 0.3, ease: "power3.out" }
-                  );
-                }
-                if (sweep) {
-                  // Fade-out is part of the tween, not an onComplete: if that
-                  // callback is ever missed (throttled tab) the gradient would
-                  // be left sitting on the card.
-                  gsap.fromTo(
-                    sweep,
-                    { xPercent: -120, opacity: 0 },
-                    {
-                      xPercent: 420,
-                      duration: 1.4,
-                      delay: at + 0.25,
-                      ease: "power2.inOut",
-                      keyframes: { opacity: [0, 1, 1, 0] },
-                    }
-                  );
-                }
-              });
-            },
-          });
-
-          // Hover lift — pointer devices only, so touch never gets a stuck
-          // hover state.
-          const fine = window.matchMedia("(pointer: fine)").matches;
-          const handlers = [];
-          if (fine && isDesktop) {
-            items.forEach((el) => {
-              const accent = el.querySelector("[data-accent]");
-              const enter = () => {
-                gsap.to(el, { y: -5, scale: 1.01, duration: 0.4, ease: "power3.out" });
-                if (accent) gsap.to(accent, { scaleX: 1, opacity: 1, duration: 0.4 });
-              };
-              const leave = () =>
-                gsap.to(el, { y: 0, scale: 1, duration: 0.45, ease: "power3.out" });
-              el.addEventListener("mouseenter", enter);
-              el.addEventListener("mouseleave", leave);
-              handlers.push([el, enter, leave]);
-            });
-          }
-
-          return () => {
-            batch.forEach((t) => t.kill());
-            handlers.forEach(([el, enter, leave]) => {
-              el.removeEventListener("mouseenter", enter);
-              el.removeEventListener("mouseleave", leave);
-            });
-          };
+        if (reduce) {
+          // Content stays fully visible; no movement at all.
+          gsap.set([heading, lede, ...items], { opacity: 1, x: 0, y: 0, skewX: 0, rotate: 0, scale: 1 });
+          gsap.set(rule, { scaleX: 1 });
+          gsap.set(q("[data-accent]"), { scaleX: 1 });
+          gsap.set(q("[data-badge]"), { opacity: 1, scale: 1 });
+          return;
         }
-      );
-    }, rootRef);
+
+        // Travel scales continuously with the width the section actually got,
+        // instead of jumping between a "mobile" and a "desktop" setting at an
+        // arbitrary 768px. A narrow column gets a short, calm move; a wide one
+        // gets the full sweep; every width in between gets something sensible,
+        // and there is no threshold left to land on the wrong side of.
+        const span = gsap.utils.clamp(0, 1, (root.clientWidth - 360) / 540);
+        const headX = -(32 + 48 * span);
+        const headSkew = -6 * span;
+        const itemY = 38 + 42 * span;
+        const itemRot = 2 * span;
+
+        gsap
+          .timeline({
+            defaults: { ease: "power3.out" },
+            scrollTrigger: {
+              trigger: root,
+              start: REVEAL_START,
+              once: true,
+              invalidateOnRefresh: true,
+            },
+          })
+          .fromTo(
+            heading,
+            { x: headX, opacity: 0, skewX: headSkew },
+            { x: 0, opacity: 1, skewX: 0, duration: 1.15 },
+            0
+          )
+          .fromTo(lede, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.8 }, 0.18)
+          .fromTo(rule, { scaleX: 0 }, { scaleX: 1, duration: 1, ease: "expo.out" }, 0.28);
+
+        // Each item reveals as it reaches the viewport, in sequence.
+        gsap.set(items, { opacity: 0, y: itemY, rotate: itemRot, scale: 0.97 });
+
+        const batch = ScrollTrigger.batch(items, {
+          start: REVEAL_START,
+          once: true,
+          onEnter: (elements) => {
+            gsap.to(elements, {
+              opacity: 1,
+              y: 0,
+              rotate: 0,
+              scale: 1,
+              duration: 1.05,
+              ease: "power3.out",
+              stagger: 0.12,
+            });
+
+            elements.forEach((el, i) => {
+              const at = i * 0.12;
+
+              // Numbers tick up to their label (00 -> 01), no flourish.
+              const num = el.querySelector("[data-num]");
+              if (num) {
+                // Snapshot the real label the first time through: this tween
+                // overwrites textContent as it counts, so re-reading it on a
+                // second run would take a mid-count "00" as the target.
+                if (!num.dataset.target) num.dataset.target = num.textContent.trim();
+                const target = parseInt(num.dataset.target, 10);
+                if (!Number.isNaN(target)) {
+                  const proxy = { v: 0 };
+                  gsap.to(proxy, {
+                    v: target,
+                    duration: 0.9,
+                    delay: at,
+                    ease: "power2.out",
+                    onUpdate: () => {
+                      num.textContent = String(Math.round(proxy.v)).padStart(2, "0");
+                    },
+                    onComplete: () => {
+                      num.textContent = String(target).padStart(2, "0");
+                    },
+                  });
+                }
+              }
+
+              if (el.dataset.winner !== "true") return;
+
+              // Winner emphasis: the rule draws in, the badge settles, and a
+              // single quiet sweep passes across the row.
+              const accent = el.querySelector("[data-accent]");
+              const badge = el.querySelector("[data-badge]");
+              const sweep = el.querySelector("[data-sweep]");
+
+              if (accent) {
+                gsap.fromTo(
+                  accent,
+                  { scaleX: 0 },
+                  { scaleX: 1, duration: 1.1, delay: at + 0.15, ease: "expo.out" }
+                );
+              }
+              if (badge) {
+                gsap.fromTo(
+                  badge,
+                  { scale: 0.8, opacity: 0 },
+                  { scale: 1, opacity: 1, duration: 0.6, delay: at + 0.3, ease: "power3.out" }
+                );
+              }
+              if (sweep) {
+                // Fade-out is part of the tween, not an onComplete: if that
+                // callback is ever missed (throttled tab) the gradient would
+                // be left sitting on the card.
+                gsap.fromTo(
+                  sweep,
+                  { xPercent: -120, opacity: 0 },
+                  {
+                    xPercent: 420,
+                    duration: 1.4,
+                    delay: at + 0.25,
+                    ease: "power2.inOut",
+                    keyframes: { opacity: [0, 1, 1, 0] },
+                  }
+                );
+              }
+            });
+          },
+        });
+
+        // Hover lift — pointer devices only, so touch never gets a stuck
+        // hover state. Capability, not width: a narrow desktop window is
+        // still a mouse, and a wide tablet still isn't.
+        const handlers = [];
+        if (canHover()) {
+          items.forEach((el) => {
+            const accent = el.querySelector("[data-accent]");
+            const enter = () => {
+              gsap.to(el, { y: -5, scale: 1.01, duration: 0.4, ease: "power3.out" });
+              if (accent) gsap.to(accent, { scaleX: 1, opacity: 1, duration: 0.4 });
+            };
+            const leave = () =>
+              gsap.to(el, { y: 0, scale: 1, duration: 0.45, ease: "power3.out" });
+            el.addEventListener("mouseenter", enter);
+            el.addEventListener("mouseleave", leave);
+            handlers.push([el, enter, leave]);
+          });
+        }
+
+        // Content must never be left hidden by a batch that mis-measured.
+        // Only rows that are themselves on screen are rescued — the ones
+        // still below the fold are simply waiting their turn.
+        cancelFailsafe = revealFailsafe(root, () => {
+          const stuck = items.filter(
+            (el) => Number(gsap.getProperty(el, "opacity")) === 0 && isOnScreen(el)
+          );
+          if (!stuck.length) return;
+          gsap.to(stuck, {
+            opacity: 1,
+            y: 0,
+            rotate: 0,
+            scale: 1,
+            duration: 0.7,
+            ease: "power3.out",
+            stagger: 0.08,
+          });
+        });
+
+        cleanups.push(() => {
+          batch.forEach((t) => t.kill());
+          handlers.forEach(([el, enter, leave]) => {
+            el.removeEventListener("mouseenter", enter);
+            el.removeEventListener("mouseleave", leave);
+          });
+        });
+      }, rootRef);
+    };
+
+    // Built only once the intro panel is clearing, so the reveals can't run
+    // and finish behind it.
+    const cancelIntro = onIntroReady(build);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      ctx.revert();
+      cancelIntro();
+      cancelFailsafe();
+      cleanups.forEach((fn) => fn());
+      ctx?.revert();
     };
   }, []);
 
@@ -277,7 +320,7 @@ export default function Achievements() {
     <section
       id="achievements"
       ref={rootRef}
-      className="container-px py-20 sm:py-28"
+      className="container-px"
     >
       <h2
         data-heading
@@ -285,7 +328,7 @@ export default function Achievements() {
       >
         Achievements
       </h2>
-      <p data-lede className="mt-4 text-base text-ink-soft sm:text-lg">
+      <p data-lede className="mt-4 text-[clamp(1rem,1.3vw,1.125rem)] text-ink-soft">
         Milestones and achievements from my journey in software development.
       </p>
 

@@ -13,13 +13,13 @@ export default function Contact() {
     <ScrollReveal
       as="section"
       id="contact"
-      className="container-px py-20 sm:py-28"
+      className="container-px"
       y={38}
       clip
       stagger={0.11}
       duration={1}
     >
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="auto-cols [--col:22rem] [--max-cols:2] [--col-gap:clamp(3rem,4vw,4rem)]">
         <div className="flex flex-col">
           <p data-reveal className="section-eyebrow text-ink-soft">04 / Connect</p>
           <h2 data-reveal className="mt-4 font-sans text-[clamp(1.875rem,9vw,4.5rem)] font-extrabold uppercase leading-[0.95] tracking-tight">
@@ -27,7 +27,7 @@ export default function Contact() {
             <br />
             Talk.
           </h2>
-          <p data-reveal className="mt-6 max-w-sm text-base text-ink-soft sm:text-lg">
+          <p data-reveal className="mt-6 max-w-sm text-[clamp(1rem,1.3vw,1.125rem)] text-ink-soft">
             Have a project, opportunity, or idea? Let&rsquo;s build something
             meaningful together.
           </p>
@@ -67,14 +67,16 @@ export default function Contact() {
 
           <div data-reveal className="mt-auto pt-12 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft">
             <p className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-accent" />
+              {/* bg-accent is white, which is also this section's background — the
+                  dot was invisible and left a gap in front of the label. */}
+              <span className="h-2 w-2 shrink-0 rounded-full bg-ink" />
               {social.status}
             </p>
             <p className="mt-1">{social.location}</p>
           </div>
         </div>
 
-        <form data-reveal className="rounded-2xl bg-dark p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:p-10">
+        <form data-reveal className="rounded-2xl bg-dark p-[clamp(1.5rem,3vw,2.5rem)] shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div>
             <label
               htmlFor="name"

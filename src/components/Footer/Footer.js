@@ -25,7 +25,6 @@ export default function Footer() {
       clip
       stagger={0.12}
       duration={1.05}
-      start="top 88%"
     >
       <div className="container-px pt-20">
         <h2 data-reveal className="font-display text-[clamp(1.5rem,7.5vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
@@ -34,12 +33,12 @@ export default function Footer() {
           Experiences.
         </h2>
 
-        <div data-reveal className="mt-16 grid grid-cols-1 gap-8 min-[420px]:grid-cols-2 sm:grid-cols-3 sm:gap-10">
+        <div data-reveal className="auto-cols [--col:13rem] [--max-cols:3] mt-16">
           <div>
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-white/40">
               Quick Links
             </p>
-            <div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-3 text-sm min-[420px]:grid-cols-2">
+            <div className="auto-cols [--col:6rem] [--max-cols:2] [--col-gap:1.5rem] mt-5 text-sm">
               <ul className="space-y-3">
                 {quickLinksA.map((link) => (
                   <li key={link.href}>
@@ -75,7 +74,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="min-[420px]:col-span-2 sm:col-span-1">
+          <div>
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-white/40">
               Contact
             </p>
@@ -108,7 +107,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div data-reveal className="mt-16 flex items-center justify-between border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
+        <div data-reveal className="mt-16 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
           <span>© 2026 Saqib Ahmed</span>
           <SectionLink href="#home" className="inline-flex items-center gap-1.5 hover:text-white">
             Back to top ↑

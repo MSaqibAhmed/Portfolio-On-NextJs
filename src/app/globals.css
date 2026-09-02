@@ -164,24 +164,73 @@ html[data-nav-open="true"] .nav-plate {
   background: rgb(var(--nav-ink) / 0.5);
 }
 
-/* On phones the sections run together because the big desktop whitespace is
-   gone. A hairline between consecutive light sections makes each start
-   legible without touching any component's layout. Dark surfaces (hero,
-   footer) already separate themselves by contrast. */
-@media (max-width: 767px) {
-  main > section + section:not([data-surface-dark]) {
-    border-top: 1px solid var(--line);
-  }
+/* Section rhythm, owned here rather than by per-section utility classes so
+   there is exactly one place it can be wrong.
 
-  main > section {
-    padding-top: 3.5rem;
-    padding-bottom: 3.5rem;
-  }
+   The padding interpolates continuously with the viewport instead of jumping
+   at a breakpoint, and the hairline between consecutive light sections is
+   always on: at 3.5rem of padding on a phone it's what keeps two sections
+   from running together, and at 7rem on a large display it still reads as
+   deliberate structure. Dark surfaces (hero, footer) separate themselves by
+   contrast and opt out. */
+main > section {
+  padding-top: clamp(3.5rem, 7vw, 7rem);
+  padding-bottom: clamp(3.5rem, 7vw, 7rem);
+}
 
-  main > section#home {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
+main > section#home {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+main > section + section:not([data-surface-dark]) {
+  border-top: 1px solid var(--line);
+}
+
+/* Intrinsic columns — the layout primitive this site uses instead of
+   breakpoints.
+
+   The grid fits as many tracks as the space it was actually given can hold,
+   so it answers to its container rather than to a list of guessed screen
+   widths. One rule is then correct on a phone, a laptop and a 5K display
+   alike, and there is no threshold left for an unusual window size to land on
+   the wrong side of. `--col` is the narrowest a column may get before the
+   grid drops to fewer of them; `min(100%, …)` stops a single track
+   overflowing a parent narrower than that.
+
+   Two knobs, no thresholds:
+     --col       the narrowest a column may get before the grid drops to
+                 fewer of them;
+     --max-cols  the most columns the design ever wants, however much room
+                 there is. Without this a 5K window would happily fit seven
+                 project cards across.
+
+   The minimum track size is the larger of the two — `--col` governs while
+   space is tight, and once there is room for more than --max-cols tracks the
+   "one track's share of --max-cols" term takes over and holds the count
+   there, letting the tracks grow instead. `min(100%, …)` stops a single track
+   overflowing a parent narrower than --col.
+
+   Usage: <div class="auto-cols [--col:20rem] [--max-cols:2]"> */
+.auto-cols {
+  --auto-cols-gap: var(--col-gap, clamp(1.75rem, 3vw, 3rem));
+
+  display: grid;
+  gap: var(--auto-cols-gap);
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      min(
+        100%,
+        max(
+          var(--col, 18rem),
+          (100% - (var(--max-cols, 4) - 1) * var(--auto-cols-gap)) /
+            var(--max-cols, 4)
+        )
+      ),
+      1fr
+    )
+  );
 }
 
 @keyframes scroll-line {

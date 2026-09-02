@@ -5,6 +5,13 @@ import { Database, Boxes, Code2, Terminal } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { coreStack, skillGroups } from "@/data/skills";
+import {
+  REVEAL_START,
+  canHover,
+  onIntroReady,
+  prefersReducedMotion,
+  revealFailsafe,
+} from "@/lib/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -79,240 +86,265 @@ export default function Skills() {
     const root = rootRef.current;
     if (!root) return undefined;
 
-    const ctx = gsap.context(() => {
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const fine = window.matchMedia("(pointer: fine)").matches;
-      const canMagnet = fine && !reduce && window.innerWidth >= 1024;
+    let ctx = null;
+    let cancelFailsafe = () => {};
 
-      const q = gsap.utils.selector(root);
-      const heading = q("[data-heading]");
-      const sub = q("[data-sub]");
-      const rules = q("[data-rule]");
-      const labels = q("[data-label]");
-      const pills = q("[data-pill]");
-      const groups = q("[data-group]");
+    const build = () => {
+      ctx = gsap.context(() => {
+        const reduce = prefersReducedMotion();
+        // Magnetism is a pointer affordance, so ask about the pointer. The old
+        // `innerWidth >= 1024` test both switched it off on a narrow desktop
+        // window and switched it on for a large tablet.
+        const canMagnet = canHover() && !reduce;
 
-      /* ---------------------------------------------------------- */
-      /* Entrance                                                    */
-      /* ---------------------------------------------------------- */
+        const q = gsap.utils.selector(root);
+        const heading = q("[data-heading]");
+        const sub = q("[data-sub]");
+        const rules = q("[data-rule]");
+        const labels = q("[data-label]");
+        const pills = q("[data-pill]");
+        const groups = q("[data-group]");
 
-      if (reduce) {
-        // Content must never be left hidden behind an animation.
-        gsap.set([heading, sub, labels, pills], { opacity: 1, y: 0, scale: 1 });
-        gsap.set(rules, { scaleX: 1 });
-        gsap.from([heading, sub, labels, pills], {
-          opacity: 0,
-          duration: 0.4,
-          stagger: 0.01,
-          scrollTrigger: { trigger: root, start: "top 75%", once: true },
-        });
-      } else {
-        const tl = gsap.timeline({
-          defaults: { ease: "power3.out" },
-          scrollTrigger: { trigger: root, start: "top 72%", once: true },
-        });
+        /* ---------------------------------------------------------- */
+        /* Entrance                                                    */
+        /* ---------------------------------------------------------- */
 
-        // No blur filter here: `fromTo` renders its "from" state immediately,
-        // so a blurred heading would sit on a composited layer from page load
-        // until the trigger fires — paid for on every scrolled frame.
-        tl.fromTo(
-          heading,
-          { opacity: 0, y: 35 },
-          { opacity: 1, y: 0, duration: 0.9 },
-          0
-        )
-          .fromTo(
-            sub,
-            { opacity: 0, y: 18 },
-            { opacity: 1, y: 0, duration: 0.8 },
-            0.1
-          )
-          .fromTo(
-            rules,
-            { scaleX: 0 },
-            { scaleX: 1, duration: 1.1, ease: "expo.out", stagger: 0.08 },
-            0.2
-          )
-          .fromTo(
-            labels,
-            { opacity: 0, y: 14 },
-            { opacity: 1, y: 0, duration: 0.7, stagger: 0.07 },
-            0.3
-          )
-          // Groups activate in sequence: core, then the paired rows.
-          .fromTo(
-            pills,
-            { opacity: 0, y: 15, scale: 0.97 },
-            {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              duration: 0.8,
-              ease: "power4.out",
-              stagger: { each: 0.05, from: "start" },
-            },
-            0.42
-          )
-          // Clear the filter so it can't cost a compositor layer afterwards.
-          .set(heading, { clearProps: "filter" });
-      }
-
-      /* ---------------------------------------------------------- */
-      /* Very subtle scroll parallax                                 */
-      /* ---------------------------------------------------------- */
-
-      // One scrubbed timeline for the whole section rather than a separate
-      // ScrollTrigger per group — seven triggers all watching the same range
-      // meant seven scroll callbacks and seven tween updates per frame.
-      if (!reduce) {
-        const par = gsap.timeline({
-          scrollTrigger: {
-            trigger: root,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
-          },
-        });
-        par.to(heading, { y: -14, ease: "none" }, 0);
-        groups.forEach((group, i) => {
-          par.to(group, { y: i % 2 === 0 ? 8 : -8, ease: "none" }, 0);
-        });
-      }
-
-      /* ---------------------------------------------------------- */
-      /* Category focus + divider signal                             */
-      /* ---------------------------------------------------------- */
-
-      const sections = q("[data-section]");
-      const listenerCleanups = [];
-
-      sections.forEach((section) => {
-        const label = section.querySelector("[data-label]");
-        if (!label) return;
-        const others = sections.filter((s) => s !== section);
-        const signal = section.querySelector("[data-signal]");
-        const rule = section.querySelector("[data-rule]");
-
-        const focus = () => {
-          if (reduce) return;
-          gsap.to(others, { opacity: 0.62, duration: 0.4, ease: "power2.out" });
-          if (signal && rule) {
-            gsap.fromTo(
-              signal,
-              { x: 0, opacity: 0 },
-              {
-                x: rule.offsetWidth,
-                opacity: 1,
-                duration: 1.1,
-                ease: "power2.inOut",
-                onComplete: () => gsap.to(signal, { opacity: 0, duration: 0.25 }),
-              }
-            );
-          }
-        };
-
-        const blur = () => {
-          if (reduce) return;
-          gsap.to(others, { opacity: 1, duration: 0.45, ease: "power2.out" });
-        };
-
-        label.addEventListener("mouseenter", focus);
-        label.addEventListener("mouseleave", blur);
-        listenerCleanups.push(() => {
-          label.removeEventListener("mouseenter", focus);
-          label.removeEventListener("mouseleave", blur);
-        });
-      });
-
-      /* ---------------------------------------------------------- */
-      /* Pill hover + magnetism                                      */
-      /* ---------------------------------------------------------- */
-
-      const coreRow = root.querySelector("[data-core-row]");
-      const corePills = coreRow ? [...coreRow.querySelectorAll("[data-pill]")] : [];
-
-      pills.forEach((pill) => {
-        if (reduce) return;
-
-        const icon = pill.querySelector("svg");
-        const isCore = corePills.includes(pill);
-        const setX = canMagnet ? gsap.quickTo(pill, "x", { duration: 0.6, ease: "power3.out" }) : null;
-        const setY = canMagnet ? gsap.quickTo(pill, "y", { duration: 0.6, ease: "power3.out" }) : null;
-
-        const onEnter = () => {
-          gsap.to(pill, {
-            scale: isCore ? 1.03 : 1.02,
-            duration: 0.3,
-            ease: "power3.out",
+        if (reduce) {
+          // Content must never be left hidden behind an animation.
+          gsap.set([heading, sub, labels, pills], { opacity: 1, y: 0, scale: 1 });
+          gsap.set(rules, { scaleX: 1 });
+          gsap.from([heading, sub, labels, pills], {
+            opacity: 0,
+            duration: 0.4,
+            stagger: 0.01,
+            scrollTrigger: { trigger: root, start: REVEAL_START, once: true },
           });
-          if (icon) {
-            gsap.to(icon, {
-              x: 2,
-              rotate: isCore ? 4 : 0,
-              duration: 0.35,
+        } else {
+          const tl = gsap.timeline({
+            defaults: { ease: "power3.out" },
+            scrollTrigger: {
+              trigger: root,
+              start: REVEAL_START,
+              once: true,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          // Content must never be left hidden by a trigger that mis-measured.
+          cancelFailsafe = revealFailsafe(root, () => {
+            if (tl.progress() === 0) tl.progress(1);
+          });
+
+          // No blur filter here: `fromTo` renders its "from" state immediately,
+          // so a blurred heading would sit on a composited layer from page load
+          // until the trigger fires — paid for on every scrolled frame.
+          tl.fromTo(
+            heading,
+            { opacity: 0, y: 35 },
+            { opacity: 1, y: 0, duration: 0.9 },
+            0
+          )
+            .fromTo(
+              sub,
+              { opacity: 0, y: 18 },
+              { opacity: 1, y: 0, duration: 0.8 },
+              0.1
+            )
+            .fromTo(
+              rules,
+              { scaleX: 0 },
+              { scaleX: 1, duration: 1.1, ease: "expo.out", stagger: 0.08 },
+              0.2
+            )
+            .fromTo(
+              labels,
+              { opacity: 0, y: 14 },
+              { opacity: 1, y: 0, duration: 0.7, stagger: 0.07 },
+              0.3
+            )
+            // Groups activate in sequence: core, then the paired rows.
+            .fromTo(
+              pills,
+              { opacity: 0, y: 15, scale: 0.97 },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.8,
+                ease: "power4.out",
+                stagger: { each: 0.05, from: "start" },
+              },
+              0.42
+            )
+            // Clear the filter so it can't cost a compositor layer afterwards.
+            .set(heading, { clearProps: "filter" });
+        }
+
+        /* ---------------------------------------------------------- */
+        /* Very subtle scroll parallax                                 */
+        /* ---------------------------------------------------------- */
+
+        // One scrubbed timeline for the whole section rather than a separate
+        // ScrollTrigger per group — seven triggers all watching the same range
+        // meant seven scroll callbacks and seven tween updates per frame.
+        if (!reduce) {
+          const par = gsap.timeline({
+            scrollTrigger: {
+              trigger: root,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 1,
+            },
+          });
+          par.to(heading, { y: -14, ease: "none" }, 0);
+          groups.forEach((group, i) => {
+            par.to(group, { y: i % 2 === 0 ? 8 : -8, ease: "none" }, 0);
+          });
+        }
+
+        /* ---------------------------------------------------------- */
+        /* Category focus + divider signal                             */
+        /* ---------------------------------------------------------- */
+
+        const sections = q("[data-section]");
+        const listenerCleanups = [];
+
+        sections.forEach((section) => {
+          const label = section.querySelector("[data-label]");
+          if (!label) return;
+          const others = sections.filter((s) => s !== section);
+          const signal = section.querySelector("[data-signal]");
+          const rule = section.querySelector("[data-rule]");
+
+          const focus = () => {
+            if (reduce) return;
+            gsap.to(others, { opacity: 0.62, duration: 0.4, ease: "power2.out" });
+            if (signal && rule) {
+              gsap.fromTo(
+                signal,
+                { x: 0, opacity: 0 },
+                {
+                  x: rule.offsetWidth,
+                  opacity: 1,
+                  duration: 1.1,
+                  ease: "power2.inOut",
+                  onComplete: () => gsap.to(signal, { opacity: 0, duration: 0.25 }),
+                }
+              );
+            }
+          };
+
+          const blur = () => {
+            if (reduce) return;
+            gsap.to(others, { opacity: 1, duration: 0.45, ease: "power2.out" });
+          };
+
+          label.addEventListener("mouseenter", focus);
+          label.addEventListener("mouseleave", blur);
+          listenerCleanups.push(() => {
+            label.removeEventListener("mouseenter", focus);
+            label.removeEventListener("mouseleave", blur);
+          });
+        });
+
+        /* ---------------------------------------------------------- */
+        /* Pill hover + magnetism                                      */
+        /* ---------------------------------------------------------- */
+
+        const coreRow = root.querySelector("[data-core-row]");
+        const corePills = coreRow ? [...coreRow.querySelectorAll("[data-pill]")] : [];
+
+        pills.forEach((pill) => {
+          if (reduce) return;
+
+          const icon = pill.querySelector("svg");
+          const isCore = corePills.includes(pill);
+          const setX = canMagnet ? gsap.quickTo(pill, "x", { duration: 0.6, ease: "power3.out" }) : null;
+          const setY = canMagnet ? gsap.quickTo(pill, "y", { duration: 0.6, ease: "power3.out" }) : null;
+
+          const onEnter = () => {
+            gsap.to(pill, {
+              scale: isCore ? 1.03 : 1.02,
+              duration: 0.3,
               ease: "power3.out",
             });
-          }
-          // Signature moment: the Core row answers as one connected system —
-          // neighbours yield a couple of pixels away from the hovered pill.
-          if (isCore) {
-            const idx = corePills.indexOf(pill);
-            corePills.forEach((other, i) => {
-              if (other === pill) return;
-              gsap.to(other, {
-                x: (i - idx) * 2,
-                duration: 0.45,
+            if (icon) {
+              gsap.to(icon, {
+                x: 2,
+                rotate: isCore ? 4 : 0,
+                duration: 0.35,
                 ease: "power3.out",
               });
-            });
-          }
-        };
+            }
+            // Signature moment: the Core row answers as one connected system —
+            // neighbours yield a couple of pixels away from the hovered pill.
+            if (isCore) {
+              const idx = corePills.indexOf(pill);
+              corePills.forEach((other, i) => {
+                if (other === pill) return;
+                gsap.to(other, {
+                  x: (i - idx) * 2,
+                  duration: 0.45,
+                  ease: "power3.out",
+                });
+              });
+            }
+          };
 
-        const onLeave = () => {
-          gsap.to(pill, { scale: 1, duration: 0.35, ease: "power3.out" });
-          if (icon) gsap.to(icon, { x: 0, rotate: 0, duration: 0.4, ease: "power3.out" });
-          if (isCore) {
-            corePills.forEach((other) => {
-              if (other === pill) gsap.to(other, { x: 0, duration: 0.45, ease: "power3.out" });
-              else gsap.to(other, { x: 0, duration: 0.5, ease: "power3.out" });
-            });
-          }
-          if (setX && !isCore) {
-            setX(0);
-            setY(0);
-          }
-        };
+          const onLeave = () => {
+            gsap.to(pill, { scale: 1, duration: 0.35, ease: "power3.out" });
+            if (icon) gsap.to(icon, { x: 0, rotate: 0, duration: 0.4, ease: "power3.out" });
+            if (isCore) {
+              corePills.forEach((other) => {
+                if (other === pill) gsap.to(other, { x: 0, duration: 0.45, ease: "power3.out" });
+                else gsap.to(other, { x: 0, duration: 0.5, ease: "power3.out" });
+              });
+            }
+            if (setX && !isCore) {
+              setX(0);
+              setY(0);
+            }
+          };
 
-        const onMove = (e) => {
-          if (!setX || isCore) return;
-          const r = pill.getBoundingClientRect();
-          const dx = e.clientX - (r.left + r.width / 2);
-          const dy = e.clientY - (r.top + r.height / 2);
-          setX(gsap.utils.clamp(-6, 6, dx * 0.3));
-          setY(gsap.utils.clamp(-6, 6, dy * 0.3));
-        };
+          const onMove = (e) => {
+            if (!setX || isCore) return;
+            const r = pill.getBoundingClientRect();
+            const dx = e.clientX - (r.left + r.width / 2);
+            const dy = e.clientY - (r.top + r.height / 2);
+            setX(gsap.utils.clamp(-6, 6, dx * 0.3));
+            setY(gsap.utils.clamp(-6, 6, dy * 0.3));
+          };
 
-        pill.addEventListener("mouseenter", onEnter);
-        pill.addEventListener("mouseleave", onLeave);
-        if (canMagnet) pill.addEventListener("mousemove", onMove);
-        listenerCleanups.push(() => {
-          pill.removeEventListener("mouseenter", onEnter);
-          pill.removeEventListener("mouseleave", onLeave);
-          if (canMagnet) pill.removeEventListener("mousemove", onMove);
+          pill.addEventListener("mouseenter", onEnter);
+          pill.addEventListener("mouseleave", onLeave);
+          if (canMagnet) pill.addEventListener("mousemove", onMove);
+          listenerCleanups.push(() => {
+            pill.removeEventListener("mouseenter", onEnter);
+            pill.removeEventListener("mouseleave", onLeave);
+            if (canMagnet) pill.removeEventListener("mousemove", onMove);
+          });
         });
-      });
 
-      return () => listenerCleanups.forEach((cleanup) => cleanup());
-    }, rootRef);
+        return () => listenerCleanups.forEach((cleanup) => cleanup());
+      }, rootRef);
+    };
 
-    return () => ctx.revert();
+    // Built only once the intro panel is clearing, so the whole staggered
+    // entrance can't play out behind it.
+    const cancelIntro = onIntroReady(build);
+
+    return () => {
+      cancelIntro();
+      cancelFailsafe();
+      ctx?.revert();
+    };
   }, []);
 
   return (
     <section
       id="skills"
       ref={rootRef}
-      className="container-px py-20 sm:py-28"
+      className="container-px"
     >
       <h2
         data-heading
@@ -361,7 +393,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-16"
+        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
       >
         <Rule />
         {[frontend, backend].map((group) => (
@@ -380,7 +412,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-16"
+        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
       >
         <Rule />
         {[database, development].map((group) => (
@@ -399,7 +431,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-16"
+        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
       >
         <Rule />
         {[tools, additional].map((group) => (

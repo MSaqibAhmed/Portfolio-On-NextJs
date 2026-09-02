@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { markIntroReady, scheduleRefresh } from "@/lib/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -68,9 +69,14 @@ export default function PortalLoader() {
       done = true;
       delete html.dataset.loading;
       setShow(false);
+      // Release the page's own animations. Idempotent, and normally already
+      // done by the timeline below as the panel starts wiping — this covers
+      // the reduced-motion and failsafe paths.
+      markIntroReady();
       // Everything below was laid out under a scroll lock; let ScrollTrigger
-      // re-measure now that the real page height is available.
-      ScrollTrigger.refresh();
+      // re-measure now that the real page height is available. Deferred a
+      // frame so the overlay is out of the tree before anything is measured.
+      scheduleRefresh();
     };
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -248,7 +254,12 @@ export default function PortalLoader() {
         );
       }
 
-      tl.set(root, { pointerEvents: "none" }, "travel+=0.34")
+      // The page's entrance animations start as the panel begins to wipe, not
+      // after it has gone: they play through the reveal instead of finishing
+      // underneath it. Waiting for `finish()` is what made the site look
+      // completely static on load.
+      tl.call(markIntroReady, null, "travel+=0.34")
+        .set(root, { pointerEvents: "none" }, "travel+=0.34")
         .to(
           root,
           { clipPath: "inset(0% 0% 100% 0%)", duration: 0.6, ease: "power4.inOut" },
@@ -288,7 +299,7 @@ export default function PortalLoader() {
               alt=""
               fill
               priority
-              sizes="(min-width: 768px) 248px, 52vw"
+              sizes="min(52vw, 248px)"
               className="object-cover object-center grayscale"
             />
           </span>
@@ -304,7 +315,7 @@ export default function PortalLoader() {
               alt=""
               fill
               priority
-              sizes="(min-width: 768px) 248px, 52vw"
+              sizes="min(52vw, 248px)"
               className="object-cover object-center grayscale"
             />
           </span>
