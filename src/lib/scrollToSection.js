@@ -1,3 +1,5 @@
+"use client";
+
 import gsap from "gsap";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 

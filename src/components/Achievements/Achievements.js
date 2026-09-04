@@ -8,7 +8,7 @@ import {
   REVEAL_START,
   canHover,
   isOnScreen,
-  onIntroReady,
+  onMotionReady,
   prefersReducedMotion,
   revealFailsafe,
   scheduleRefresh,
@@ -150,7 +150,7 @@ export default function Achievements() {
         const itemY = 38 + 42 * span;
         const itemRot = 2 * span;
 
-        gsap
+        const headTl = gsap
           .timeline({
             defaults: { ease: "power3.out" },
             scrollTrigger: {
@@ -278,7 +278,11 @@ export default function Achievements() {
         // Content must never be left hidden by a batch that mis-measured.
         // Only rows that are themselves on screen are rescued — the ones
         // still below the fold are simply waiting their turn.
-        cancelFailsafe = revealFailsafe(root, () => {
+        cancelFailsafe = revealFailsafe(root, [...heading, ...lede, ...items], () => {
+          // The heading block and the per-item batch fail independently, so
+          // each gets its own recovery.
+          if (headTl.progress() === 0) headTl.progress(1);
+
           const stuck = items.filter(
             (el) => Number(gsap.getProperty(el, "opacity")) === 0 && isOnScreen(el)
           );
@@ -304,9 +308,10 @@ export default function Achievements() {
       }, rootRef);
     };
 
-    // Built only once the intro panel is clearing, so the reveals can't run
-    // and finish behind it.
-    const cancelIntro = onIntroReady(build);
+    // Built only once the intro panel is clearing AND the viewport can be
+    // measured, so the reveals can neither run and finish behind the panel
+    // nor be laid out against a viewport that reports no size.
+    const cancelIntro = onMotionReady(build);
 
     return () => {
       cancelIntro();

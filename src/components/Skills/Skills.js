@@ -8,7 +8,7 @@ import { coreStack, skillGroups } from "@/data/skills";
 import {
   REVEAL_START,
   canHover,
-  onIntroReady,
+  onMotionReady,
   prefersReducedMotion,
   revealFailsafe,
 } from "@/lib/motion";
@@ -130,10 +130,15 @@ export default function Skills() {
             },
           });
 
-          // Content must never be left hidden by a trigger that mis-measured.
-          cancelFailsafe = revealFailsafe(root, () => {
-            if (tl.progress() === 0) tl.progress(1);
-          });
+          // Content must never be left hidden by a trigger that mis-measured
+          // or by a ticker that never ran.
+          cancelFailsafe = revealFailsafe(
+            root,
+            [...heading, ...sub, ...labels, ...pills],
+            () => {
+              if (tl.progress() === 0) tl.progress(1);
+            }
+          );
 
           // No blur filter here: `fromTo` renders its "from" state immediately,
           // so a blurred heading would sit on a composited layer from page load
@@ -329,9 +334,10 @@ export default function Skills() {
       }, rootRef);
     };
 
-    // Built only once the intro panel is clearing, so the whole staggered
-    // entrance can't play out behind it.
-    const cancelIntro = onIntroReady(build);
+    // Built only once the intro panel is clearing AND the viewport can be
+    // measured, so the whole staggered entrance can neither play out behind
+    // the panel nor be laid out against a viewport that reports no size.
+    const cancelIntro = onMotionReady(build);
 
     return () => {
       cancelIntro();

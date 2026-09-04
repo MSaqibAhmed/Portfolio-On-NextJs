@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { canHover, onIntroReady, prefersReducedMotion } from "@/lib/motion";
+import {
+  canHover,
+  onMotionReady,
+  prefersReducedMotion,
+  scheduleRefresh,
+} from "@/lib/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -217,10 +222,13 @@ export default function HeroAboutTransition() {
       ro.observe(heroEl);
       ro.observe(aboutEl);
 
-      ScrollTrigger.refresh();
+      // Coalesced with every other refresh on the page, and skipped entirely
+      // while the viewport reports no size — measuring then is what produced
+      // negative start positions for every trigger on the site.
+      scheduleRefresh();
     };
 
-    const cancelIntro = onIntroReady(start);
+    const cancelIntro = onMotionReady(start);
 
     return () => {
       cancelIntro();

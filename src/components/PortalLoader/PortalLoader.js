@@ -4,7 +4,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { markIntroReady, scheduleRefresh } from "@/lib/motion";
+import {
+  extendIntroFailsafe,
+  markIntroReady,
+  scheduleRefresh,
+} from "@/lib/motion";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -85,7 +89,12 @@ export default function PortalLoader() {
     // browsers stop entirely in a backgrounded tab — so a visitor who opens
     // the site in a background tab would otherwise come back to a frozen
     // black panel. This releases the page regardless of the timeline's state.
-    const failsafe = window.setTimeout(finish, IMAGE_WAIT_MS + 5000);
+    //
+    // Re-armed from the timeline's real duration once it starts playing (see
+    // below): a fixed guess is simultaneously too long for a broken intro and
+    // too short for a slow first load, where tripping it early would release
+    // every entrance animation to run, unseen, behind the panel.
+    let failsafe = window.setTimeout(finish, IMAGE_WAIT_MS + 5000);
 
     const ctx = gsap.context(() => {
       if (reduce) {
@@ -126,7 +135,14 @@ export default function PortalLoader() {
         decoded,
         new Promise((res) => window.setTimeout(res, IMAGE_WAIT_MS)),
       ]).then(() => {
-        if (!cancelled) tl.play();
+        if (cancelled) return;
+        // Now that the sequence is actually starting, both failsafes can be
+        // measured against what it really costs instead of a guess.
+        const runway = tl.duration() * 1000 + 2500;
+        window.clearTimeout(failsafe);
+        failsafe = window.setTimeout(finish, runway);
+        extendIntroFailsafe(runway);
+        tl.play();
       });
 
       gsap.set(portal, {
@@ -272,6 +288,16 @@ export default function PortalLoader() {
       window.clearTimeout(failsafe);
       ctx.revert();
       delete html.dataset.loading;
+      // The travel tween hides the real navbar wordmark in onStart and
+      // restores it in onComplete. If the timeline is torn down between the
+      // two — which is exactly what the failsafe above does on a slow first
+      // load — ctx.revert() is the only thing standing between the visitor
+      // and a permanently invisible navbar. Clear both pieces outright so
+      // that is never load-bearing.
+      const wordmark = document.querySelector("[data-navbar-wordmark]");
+      const pill = document.querySelector("nav[aria-label='Primary']");
+      if (wordmark) gsap.set(wordmark, { clearProps: "opacity,visibility" });
+      if (pill) gsap.set(pill, { clearProps: "opacity,transform,visibility" });
     };
   }, []);
 

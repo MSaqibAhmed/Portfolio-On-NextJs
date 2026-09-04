@@ -3,7 +3,11 @@
 import { useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
-import { onIntroReady, prefersReducedMotion } from "@/lib/motion";
+import {
+  onMotionReady,
+  prefersReducedMotion,
+  revealFailsafe,
+} from "@/lib/motion";
 
 const ACCENT = "#00ff9d";
 
@@ -45,10 +49,21 @@ export default function Hero() {
     gsap.set(parts, { opacity: 0 });
 
     let ctx = null;
+    let tl = null;
+
+    // The hero is the first thing anyone sees, and until now it was the one
+    // reveal on the site with no safety net at all: hidden at mount, and
+    // visible again only if the intro handed over AND the ticker was running.
+    // A backgrounded tab on a cold load satisfied neither, and the visitor
+    // arrived at an empty black screen. Registered before build() so it
+    // covers the case where build() never runs.
+    const cancelFailsafe = revealFailsafe(hero, parts, () => {
+      if (tl && tl.progress() === 0) tl.progress(1);
+    });
 
     const build = () => {
       ctx = gsap.context(() => {
-        gsap
+        tl = gsap
           .timeline({ defaults: { ease: "power3.out" } })
           .fromTo(
             fullStackRef.current,
@@ -88,10 +103,11 @@ export default function Hero() {
       }, hero);
     };
 
-    const cancelIntro = onIntroReady(build);
+    const cancelIntro = onMotionReady(build);
 
     return () => {
       cancelIntro();
+      cancelFailsafe();
       ctx?.revert();
       // revert() puts back the pre-timeline inline styles, which here are the
       // hidden state above — clear them so a remount can never leave the hero

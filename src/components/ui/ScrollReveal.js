@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   REVEAL_START,
-  onIntroReady,
+  onMotionReady,
   prefersReducedMotion,
   revealFailsafe,
 } from "@/lib/motion";
@@ -73,7 +73,16 @@ export default function ScrollReveal({
     gsap.set(targets, from);
 
     let ctx = null;
-    let cancelFailsafe = () => {};
+    let tween = null;
+
+    // Armed here rather than inside build(), so the safety net exists from
+    // the moment the targets are hidden. Registering it inside build() meant
+    // that anything which stopped build() from ever running — a stalled
+    // intro, an unmeasurable viewport, a thrown error — took the failsafe
+    // down with it and left the section blank.
+    const cancelFailsafe = revealFailsafe(root, targets, () => {
+      if (tween && tween.progress() === 0) tween.progress(1);
+    });
 
     const build = () => {
       ctx = gsap.context(() => {
@@ -97,15 +106,11 @@ export default function ScrollReveal({
         };
         if (clip) to.clipPath = "inset(0% 0% 0% 0%)";
 
-        const tween = gsap.to(targets, to);
-
-        cancelFailsafe = revealFailsafe(root, () => {
-          if (tween.progress() === 0) tween.progress(1);
-        });
+        tween = gsap.to(targets, to);
       }, ref);
     };
 
-    const cancelIntro = onIntroReady(build);
+    const cancelIntro = onMotionReady(build);
 
     return () => {
       cancelIntro();
