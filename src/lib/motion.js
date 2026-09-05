@@ -5,6 +5,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
+
+  // A phone's URL bar collapsing as you scroll changes only the viewport
+  // HEIGHT, and it does it *during* the scroll. Left alone, ScrollTrigger
+  // reads that as a resize and runs a full refresh: every trigger built with
+  // `invalidateOnRefresh` re-derives its start against a viewport that is
+  // mid-transition, so reveals fire at a scroll position that no longer
+  // exists — some play early, some never play at all. It is the single most
+  // common reason entrance animations look broken on a phone and perfect on
+  // the desktop the site was built on.
+  ScrollTrigger.config({ ignoreMobileResize: true });
 }
 
 /* ------------------------------------------------------------------ */
@@ -24,6 +34,69 @@ export const prefersReducedMotion = () =>
 export const canHover = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+/** A touch screen, whatever its size. */
+export const isCoarsePointer = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(pointer: coarse)").matches;
+
+/**
+ * The one query that decides whether the Hero-to-About portrait flip runs.
+ *
+ * The flip is a full-screen overlay that flies a card between two portraits
+ * that are side by side on a wide layout. Below `lg` those portraits are
+ * stacked instead, so the card has to travel the whole height of the page and
+ * lands on top of the copy on the way — which is why it is unwanted on a
+ * phone regardless of what the pointer says. So this asks BOTH questions:
+ * enough width for the layout the effect was designed against, and a pointer
+ * that makes hover-scale motion appropriate at all.
+ *
+ * `lg` here is Tailwind's own 1024px breakpoint, so the JS gate and the
+ * `hidden lg:block` on the overlay itself can never disagree.
+ */
+export const FLIP_QUERY =
+  "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
+
+/**
+ * Runs `cb(matches)` now and again whenever the match state flips. Returns an
+ * unsubscribe.
+ *
+ * Everything gated on a media query needs this rather than a one-off read at
+ * mount: a browser dragged from a wide window down to a phone-sized one (or a
+ * tablet rotated) has to actually tear the effect down, not keep running the
+ * one it happened to qualify for when it first mounted.
+ */
+export function watchMedia(query, cb) {
+  if (typeof window === "undefined") return () => {};
+  const mq = window.matchMedia(query);
+  let last = mq.matches;
+  cb(last);
+
+  // `change` is the correct event and it is what a desktop browser fires. It
+  // is also the one that goes missing: embedded and remote-controlled browsers
+  // update `matches` from a device-metrics override WITHOUT ever dispatching
+  // it, and an orientation flip has historically done the same on mobile
+  // Safari. A gate built on `change` alone is then stuck on whatever the
+  // answer was at mount — the effect either never starts on a device that
+  // qualifies, or never stops on one that no longer does.
+  //
+  // Re-reading on resize closes that for good. It costs one boolean compare,
+  // and `cb` still only runs when the answer actually changed.
+  const sync = () => {
+    if (mq.matches === last) return;
+    last = mq.matches;
+    cb(last);
+  };
+
+  mq.addEventListener("change", sync);
+  window.addEventListener("resize", sync);
+  window.addEventListener("orientationchange", sync);
+  return () => {
+    mq.removeEventListener("change", sync);
+    window.removeEventListener("resize", sync);
+    window.removeEventListener("orientationchange", sync);
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /* Reveal geometry                                                     */

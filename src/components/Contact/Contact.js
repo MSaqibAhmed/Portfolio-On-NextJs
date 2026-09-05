@@ -19,20 +19,20 @@ export default function Contact() {
       stagger={0.11}
       duration={1}
     >
-      <div className="auto-cols [--col:22rem] [--max-cols:2] [--col-gap:clamp(3rem,4vw,4rem)]">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col">
           <p data-reveal className="section-eyebrow text-ink-soft">04 / Connect</p>
-          <h2 data-reveal className="mt-4 font-sans text-[clamp(1.875rem,9vw,4.5rem)] font-extrabold uppercase leading-[0.95] tracking-tight">
+          <h2 data-reveal className="mt-4 font-sans text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
             Let&rsquo;s
             <br />
             Talk.
           </h2>
-          <p data-reveal className="mt-6 max-w-sm text-[clamp(1rem,1.3vw,1.125rem)] text-ink-soft">
+          <p data-reveal className="mt-6 max-w-sm text-base text-ink-soft lg:text-lg">
             Have a project, opportunity, or idea? Let&rsquo;s build something
             meaningful together.
           </p>
 
-          <ul data-reveal className="mt-10 space-y-4">
+          <ul data-reveal className="mt-8 space-y-4 lg:mt-10">
             {links.map((link) =>
               isRealLink(link.href) ? (
                 <li key={link.label}>
@@ -65,7 +65,7 @@ export default function Contact() {
             </li>
           </ul>
 
-          <div data-reveal className="mt-auto pt-12 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft">
+          <div data-reveal className="mt-auto pt-8 text-[0.7rem] uppercase tracking-[0.14em] text-ink-soft lg:pt-12">
             <p className="flex items-center gap-2">
               {/* bg-accent is white, which is also this section's background — the
                   dot was invisible and left a gap in front of the label. */}
@@ -76,7 +76,7 @@ export default function Contact() {
           </div>
         </div>
 
-        <form data-reveal className="rounded-2xl bg-dark p-[clamp(1.5rem,3vw,2.5rem)] shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <form data-reveal className="rounded-2xl bg-dark p-6 shadow-[0_20px_60px_rgba(0,0,0,0.15)] sm:p-8 lg:p-10">
           <div>
             <label
               htmlFor="name"
@@ -127,7 +127,7 @@ export default function Contact() {
 
           <button
             type="submit"
-            className="mt-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-accent-ink transition-opacity hover:opacity-90"
+            className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 text-sm font-bold uppercase tracking-[0.14em] text-accent-ink transition-opacity hover:opacity-90 lg:mt-10"
           >
             Get in touch <ArrowUpRight className="h-4 w-4" />
           </button>

@@ -50,7 +50,7 @@ function TaggedPill({ tag, label }) {
   return (
     <span
       data-pill
-      className="inline-flex items-center gap-2 rounded-full border border-line bg-white/60 px-4 py-2 text-sm"
+      className="inline-flex items-center gap-2 rounded-full border border-line bg-white/60 px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
     >
       {tag ? (
         <span data-pill-tag className="text-[0.65rem] font-semibold text-ink-soft">
@@ -66,7 +66,7 @@ function SimplePill({ label, filled }) {
   return (
     <span
       data-pill
-      className={`inline-flex items-center rounded-full border px-4 py-2 text-sm ${
+      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm ${
         filled ? "border-ink bg-ink text-white" : "border-line bg-white/60 text-ink"
       }`}
     >
@@ -354,13 +354,13 @@ export default function Skills() {
     >
       <h2
         data-heading
-        className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight"
+        className="font-sans text-3xl font-extrabold uppercase tracking-tight sm:text-4xl md:text-5xl lg:text-6xl"
       >
         Tech Stack
       </h2>
       <p
         data-sub
-        className="mt-4 text-sm uppercase tracking-[0.14em] text-ink-soft"
+        className="mt-4 text-xs uppercase tracking-[0.14em] text-ink-soft sm:text-sm"
       >
         Tools &amp; technologies I use to build digital experiences
       </p>
@@ -379,14 +379,14 @@ export default function Skills() {
               MERN
             </span>
           </div>
-          <div data-core-row className="flex flex-wrap gap-3">
+          <div data-core-row className="flex flex-wrap gap-2 sm:gap-3">
             {coreStack.map((item) => {
               const Icon = coreIcons[item.icon];
               return (
                 <span
                   key={item.label}
                   data-pill
-                  className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-white"
+                  className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-xs font-medium text-white sm:px-5 sm:py-3 sm:text-sm"
                 >
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
                   {item.label}
@@ -399,7 +399,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
+        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-10"
       >
         <Rule />
         {[frontend, backend].map((group) => (
@@ -407,7 +407,7 @@ export default function Skills() {
             <p data-label className="section-eyebrow mb-4 cursor-default text-ink-soft">
               {group.index} / {group.title}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {group.items.map((item) => (
                 <TaggedPill key={item.label} tag={item.tag} label={item.label} />
               ))}
@@ -418,7 +418,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
+        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-10"
       >
         <Rule />
         {[database, development].map((group) => (
@@ -426,7 +426,7 @@ export default function Skills() {
             <p data-label className="section-eyebrow mb-4 cursor-default text-ink-soft">
               {group.index}/ {group.title}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {group.items.map((item) => (
                 <SimplePill key={item.label} label={item.label} filled={item.filled} />
               ))}
@@ -437,7 +437,7 @@ export default function Skills() {
 
       <div
         data-section
-        className="auto-cols [--col:19rem] [--max-cols:2] relative border-t border-transparent py-8"
+        className="relative grid grid-cols-1 gap-8 border-t border-transparent py-8 md:grid-cols-2 md:gap-10"
       >
         <Rule />
         {[tools, additional].map((group) => (
@@ -445,7 +445,7 @@ export default function Skills() {
             <p data-label className="section-eyebrow mb-4 cursor-default text-ink-soft">
               {group.index}/ {group.title}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {group.items.map((item) => (
                 <SimplePill key={item.label} label={item.label} />
               ))}

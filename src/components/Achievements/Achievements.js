@@ -50,17 +50,17 @@ function LargeItem({ item }) {
     <div
       data-item
       data-winner={isWinner ? "true" : undefined}
-      className="relative overflow-hidden border-b border-line py-10"
+      className="relative overflow-hidden border-b border-line py-8 md:py-10"
     >
       {isWinner ? <WinnerAccents /> : null}
       <span data-num className="text-xs text-ink-soft">
         {item.index}
       </span>
-      <div className="mt-2 flex flex-wrap items-baseline gap-x-[clamp(0.75rem,1.5vw,1rem)] gap-y-2">
-        <h3 className="font-display text-[clamp(1.875rem,4vw,3rem)] font-semibold uppercase leading-none">
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-2 md:gap-x-4">
+        <h3 className="font-display text-2xl font-semibold uppercase leading-none sm:text-3xl md:text-4xl lg:text-5xl">
           {item.title}
         </h3>
-        <span className="font-display text-[clamp(1.25rem,2.5vw,1.875rem)] font-medium text-ink-soft">
+        <span className="font-display text-lg font-medium text-ink-soft sm:text-xl md:text-2xl lg:text-3xl">
           {item.year}
         </span>
       </div>
@@ -73,7 +73,7 @@ function LargeItem({ item }) {
             {item.badge}
           </span>
         ) : null}
-        <p className="text-[clamp(0.875rem,1.1vw,1rem)] text-ink-soft">{item.description}</p>
+        <p className="text-sm text-ink-soft lg:text-base">{item.description}</p>
       </div>
     </div>
   );
@@ -83,20 +83,20 @@ function CompactItem({ item }) {
   return (
     <div
       data-item
-      className="relative flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 overflow-hidden border-b border-line py-6"
+      className="relative flex flex-col gap-y-2 overflow-hidden border-b border-line py-6 md:flex-row md:flex-wrap md:items-baseline md:justify-between md:gap-x-6"
     >
-      <div className="flex items-baseline gap-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span data-num className="text-xs text-ink-soft">
           {item.index}
         </span>
-        <h3 className="font-display text-[clamp(1.25rem,2.5vw,1.875rem)] font-medium uppercase">
+        <h3 className="font-display text-xl font-medium uppercase sm:text-2xl lg:text-3xl">
           {item.title}
         </h3>
-        <span className="font-display text-[clamp(1.125rem,2vw,1.5rem)] font-medium text-ink-soft">
+        <span className="font-display text-lg font-medium text-ink-soft sm:text-xl lg:text-2xl">
           {item.year}
         </span>
       </div>
-      <p className="max-w-[38ch] text-[clamp(0.875rem,1.1vw,1rem)] text-ink-soft">
+      <p className="text-sm text-ink-soft md:max-w-[38ch] lg:text-base">
         {item.description}
       </p>
     </div>
@@ -329,11 +329,11 @@ export default function Achievements() {
     >
       <h2
         data-heading
-        className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight"
+        className="font-sans text-3xl font-extrabold uppercase tracking-tight sm:text-4xl md:text-5xl lg:text-6xl"
       >
         Achievements
       </h2>
-      <p data-lede className="mt-4 text-[clamp(1rem,1.3vw,1.125rem)] text-ink-soft">
+      <p data-lede className="mt-4 text-base text-ink-soft lg:text-lg">
         Milestones and achievements from my journey in software development.
       </p>
 

@@ -11,11 +11,16 @@ const DEG = Math.PI / 180;
 // Sections the radial menu points at, for scroll-spy.
 const SECTION_IDS = navMenu.map((item) => item.href.slice(1));
 
-// Half the widest item label (min-w-9rem = 144px) plus a breathing margin,
-// and roughly half an item's height plus the same margin. These are what the
-// ring has to clear, so they are what the radius is solved against.
+// Fallbacks only, for the frames before the items have been laid out and can
+// be measured. Everything after that reads the real box: the labels are
+// smaller on a phone (`min-w-32` vs `sm:min-w-36`) and their type scales with
+// the breakpoint, so a hardcoded half-width would reserve desktop-sized
+// clearance on a 360px screen and shrink the ring for no reason.
 const LABEL_HALF = 88;
 const ITEM_TALL = 88;
+
+// Breathing room kept between an item's own box and the viewport edge.
+const LABEL_MARGIN = 16;
 
 // Clearance kept between the ring and both the trigger pill above it and the
 // bottom edge below it.
@@ -43,7 +48,7 @@ const COS30 = Math.cos(30 * DEG);
  *                 than in the viewport. Without this the 12 o'clock item
  *                 slid underneath the pill and simply vanished.
  */
-function computeLayout(navBottom, itemHeight) {
+function computeLayout(navBottom, itemHeight, labelHalf) {
   const w = window.innerWidth;
   const h = window.innerHeight;
 
@@ -51,7 +56,7 @@ function computeLayout(navBottom, itemHeight) {
   const bandBottom = h - EDGE_GAP;
   const bandCentre = (bandTop + bandBottom) / 2;
 
-  const maxByWidth = (w / 2 - LABEL_HALF) / COS30;
+  const maxByWidth = (w / 2 - labelHalf) / COS30;
   const maxByHeight = (bandBottom - bandTop) / 2 - itemHeight / 2;
   const radius = Math.max(72, Math.min(maxByWidth, maxByHeight, 320));
 
@@ -138,8 +143,15 @@ export default function Navbar() {
       : 0;
     const firstItem = magnetRefs.current[0];
     const itemHeight = firstItem?.offsetHeight || ITEM_TALL;
+    // The widest label is what the ring actually has to clear horizontally,
+    // and which label that is changes with the type scale.
+    const widest = magnetRefs.current.reduce(
+      (max, el) => Math.max(max, el?.offsetWidth || 0),
+      0
+    );
+    const labelHalf = widest ? widest / 2 + LABEL_MARGIN : LABEL_HALF;
 
-    const layout = computeLayout(navBottom, itemHeight);
+    const layout = computeLayout(navBottom, itemHeight, labelHalf);
     layoutRef.current = layout;
 
     // The ring no longer sits at the viewport's centre (it is centred in the
@@ -708,17 +720,17 @@ export default function Navbar() {
     <>
       <header
         ref={headerRef}
-        className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center pt-[clamp(1rem,1.6vw,1.25rem)]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center pt-4 lg:pt-5"
       >
         <nav
           ref={pillRef}
           aria-label="Primary"
-          className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-dark shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-[0_10px_38px_rgba(0,0,0,0.6)] px-[clamp(1.25rem,2vw,1.5rem)] py-[clamp(0.625rem,1vw,0.75rem)]"
+          className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-dark px-5 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-[border-color,box-shadow] duration-300 hover:border-white/25 hover:shadow-[0_10px_38px_rgba(0,0,0,0.6)] lg:px-6 lg:py-3"
         >
           <span
             ref={brandWrapRef}
             data-navbar-wordmark
-            className="overflow-hidden whitespace-nowrap font-display text-[clamp(0.65rem,0.9vw,0.75rem)] font-medium uppercase tracking-[0.3em] text-white"
+            className="overflow-hidden whitespace-nowrap font-display text-[0.65rem] font-medium uppercase tracking-[0.22em] text-white sm:tracking-[0.3em] lg:text-xs"
           >
             Saqib Ahmed
           </span>
@@ -767,7 +779,7 @@ export default function Navbar() {
           aria-hidden
           className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-0"
         >
-          <span className="select-none whitespace-nowrap font-display text-[clamp(2.5rem,15vw,11rem)] font-black uppercase leading-[0.8] tracking-[-0.05em] opacity-[0.07]">
+          <span className="select-none whitespace-nowrap font-display text-5xl font-black uppercase leading-[0.8] tracking-[-0.05em] opacity-[0.07] sm:text-7xl md:text-8xl lg:text-[11rem]">
             {previewItem?.label ?? ""}
           </span>
           <span className="mt-4 text-[10px] uppercase tracking-[0.3em] opacity-25">
@@ -858,7 +870,7 @@ export default function Navbar() {
                     onMouseLeave={() => setHovered(-1)}
                     onFocus={() => setHovered(i)}
                     onBlur={() => setHovered(-1)}
-                    className={`group flex min-h-[52px] min-w-[9rem] flex-col items-center justify-center gap-1 rounded-2xl px-4 py-3 text-center outline-none transition-opacity duration-300 focus-visible:ring-2 focus-visible:ring-current ${
+                    className={`group flex min-h-[52px] min-w-[8rem] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-center outline-none transition-opacity duration-300 focus-visible:ring-2 focus-visible:ring-current sm:min-w-[9rem] sm:px-4 ${
                       isQuiet ? "opacity-35" : "opacity-100"
                     }`}
                   >
@@ -867,7 +879,7 @@ export default function Navbar() {
                     </span>
 
                     <span
-                      className={`whitespace-nowrap font-display text-[clamp(0.8rem,3.2vw,1.6rem)] uppercase leading-none tracking-[-0.01em] transition-all duration-300 group-hover:tracking-[0.03em] group-hover:opacity-100 ${
+                      className={`whitespace-nowrap font-display text-sm uppercase leading-none tracking-[-0.01em] transition-all duration-300 group-hover:tracking-[0.03em] group-hover:opacity-100 sm:text-base md:text-lg lg:text-2xl ${
                         isActive ? "font-black opacity-100" : "font-medium opacity-75"
                       }`}
                     >

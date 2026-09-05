@@ -27,6 +27,12 @@
   --font-display: var(--font-roboto);
 }
 
+/* A viewport too short for the hero's full vertical composition: a phone in
+   landscape, or a small laptop with a lot of browser chrome. Paired with the
+   sm/md/lg width breakpoints so the hero answers to both axes — the height is
+   what actually runs out first when a phone is turned sideways. */
+@custom-variant short (@media (height < 560px));
+
 html {
   scroll-behavior: smooth;
 
@@ -98,9 +104,35 @@ html[data-loading="true"] body {
   border: 0;
 }
 
+/* The page gutter, stepped on Tailwind's own breakpoints so it lines up with
+   every `sm:` / `md:` / `lg:` decision made in the components. */
 .container-px {
-  padding-left: clamp(1.25rem, 4vw, 3.5rem);
-  padding-right: clamp(1.25rem, 4vw, 3.5rem);
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+/* sm */
+@media (min-width: 40rem) {
+  .container-px {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* lg */
+@media (min-width: 64rem) {
+  .container-px {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* 2xl */
+@media (min-width: 96rem) {
+  .container-px {
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+  }
 }
 
 .section-eyebrow {
@@ -165,17 +197,33 @@ html[data-nav-open="true"] .nav-plate {
 }
 
 /* Section rhythm, owned here rather than by per-section utility classes so
-   there is exactly one place it can be wrong.
+   there is exactly one place it can be wrong. Stepped on the same sm/md/lg
+   breakpoints the components use, so a section's padding and its internal
+   grid change gear together instead of drifting apart.
 
-   The padding interpolates continuously with the viewport instead of jumping
-   at a breakpoint, and the hairline between consecutive light sections is
-   always on: at 3.5rem of padding on a phone it's what keeps two sections
-   from running together, and at 7rem on a large display it still reads as
-   deliberate structure. Dark surfaces (hero, footer) separate themselves by
-   contrast and opt out. */
+   The hairline between consecutive light sections is always on: at 3.5rem of
+   padding on a phone it's what keeps two sections from running together, and
+   at 7rem on a large display it still reads as deliberate structure. Dark
+   surfaces (hero, footer) separate themselves by contrast and opt out. */
 main > section {
-  padding-top: clamp(3.5rem, 7vw, 7rem);
-  padding-bottom: clamp(3.5rem, 7vw, 7rem);
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
+}
+
+/* md */
+@media (min-width: 48rem) {
+  main > section {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* lg */
+@media (min-width: 64rem) {
+  main > section {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
 }
 
 main > section#home {
@@ -185,52 +233,6 @@ main > section#home {
 
 main > section + section:not([data-surface-dark]) {
   border-top: 1px solid var(--line);
-}
-
-/* Intrinsic columns — the layout primitive this site uses instead of
-   breakpoints.
-
-   The grid fits as many tracks as the space it was actually given can hold,
-   so it answers to its container rather than to a list of guessed screen
-   widths. One rule is then correct on a phone, a laptop and a 5K display
-   alike, and there is no threshold left for an unusual window size to land on
-   the wrong side of. `--col` is the narrowest a column may get before the
-   grid drops to fewer of them; `min(100%, …)` stops a single track
-   overflowing a parent narrower than that.
-
-   Two knobs, no thresholds:
-     --col       the narrowest a column may get before the grid drops to
-                 fewer of them;
-     --max-cols  the most columns the design ever wants, however much room
-                 there is. Without this a 5K window would happily fit seven
-                 project cards across.
-
-   The minimum track size is the larger of the two — `--col` governs while
-   space is tight, and once there is room for more than --max-cols tracks the
-   "one track's share of --max-cols" term takes over and holds the count
-   there, letting the tracks grow instead. `min(100%, …)` stops a single track
-   overflowing a parent narrower than --col.
-
-   Usage: <div class="auto-cols [--col:20rem] [--max-cols:2]"> */
-.auto-cols {
-  --auto-cols-gap: var(--col-gap, clamp(1.75rem, 3vw, 3rem));
-
-  display: grid;
-  gap: var(--auto-cols-gap);
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(
-      min(
-        100%,
-        max(
-          var(--col, 18rem),
-          (100% - (var(--max-cols, 4) - 1) * var(--auto-cols-gap)) /
-            var(--max-cols, 4)
-        )
-      ),
-      1fr
-    )
-  );
 }
 
 @keyframes scroll-line {

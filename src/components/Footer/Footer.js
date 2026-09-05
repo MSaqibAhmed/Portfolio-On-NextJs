@@ -26,19 +26,19 @@ export default function Footer() {
       stagger={0.12}
       duration={1.05}
     >
-      <div className="container-px pt-20">
-        <h2 data-reveal className="font-display text-[clamp(1.5rem,7.5vw,6rem)] font-medium uppercase leading-[0.9] tracking-tight">
+      <div className="container-px pt-16 lg:pt-20">
+        <h2 data-reveal className="font-display text-3xl font-medium uppercase leading-[0.9] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl">
           Building Digital
           <br />
           Experiences.
         </h2>
 
-        <div data-reveal className="auto-cols [--col:13rem] [--max-cols:3] mt-16">
+        <div data-reveal className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8 lg:mt-16 lg:grid-cols-3">
           <div>
             <p className="text-[0.65rem] uppercase tracking-[0.14em] text-white/40">
               Quick Links
             </p>
-            <div className="auto-cols [--col:6rem] [--max-cols:2] [--col-gap:1.5rem] mt-5 text-sm">
+            <div className="mt-5 grid grid-cols-2 gap-x-6 text-sm">
               <ul className="space-y-3">
                 {quickLinksA.map((link) => (
                   <li key={link.href}>
@@ -107,7 +107,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div data-reveal className="mt-16 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50">
+        <div data-reveal className="mt-12 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/10 py-6 text-[0.7rem] uppercase tracking-[0.14em] text-white/50 lg:mt-16">
           <span>© 2026 Saqib Ahmed</span>
           <SectionLink href="#home" className="inline-flex items-center gap-1.5 hover:text-white">
             Back to top ↑
@@ -117,7 +117,7 @@ export default function Footer() {
 
       <p
         aria-hidden
-        className="select-none pl-[clamp(1.25rem,4vw,3.5rem)] font-display font-semibold uppercase leading-[0.8] text-white/[0.06]"
+        className="select-none pl-5 font-display font-semibold uppercase leading-[0.8] text-white/[0.06] sm:pl-8 lg:pl-12 2xl:pl-14"
         style={{ fontSize: "clamp(1.75rem, 12vw, 13rem)" }}
       >
         Saqib Ahmed

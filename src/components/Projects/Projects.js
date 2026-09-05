@@ -14,12 +14,12 @@ export default function Projects() {
       stagger={0.1}
     >
       <div data-reveal className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <h2 className="font-sans text-[clamp(1.5rem,7.5vw,3.75rem)] font-extrabold uppercase tracking-tight">
+        <h2 className="font-sans text-3xl font-extrabold uppercase tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
           Featured Projects
         </h2>
-        {/* One link, not a breakpoint-swapped pair: the wrapping flex row
-            puts it beside the heading when there's room and underneath it
-            when there isn't. */}
+        {/* One link, not a duplicated pair: the wrapping flex row puts it
+            beside the heading when there's room and underneath it when there
+            isn't, so no breakpoint has to guess which. */}
         <a
           href="#projects"
           className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em]"
@@ -28,12 +28,12 @@ export default function Projects() {
         </a>
       </div>
 
-      <div data-reveal className="mt-8 border-t border-line" />
+      <div data-reveal className="mt-6 border-t border-line sm:mt-8" />
 
       {/* Its own reveal group so the cards drop in from above while the
           heading rises — nested roots don't steal each other's targets. */}
       <ScrollReveal
-        className="auto-cols [--col:20rem] [--max-cols:2] [--col-gap:clamp(2.5rem,4vw,3.5rem)] mt-12"
+        className="mt-8 grid grid-cols-1 gap-10 sm:mt-10 md:grid-cols-2 md:gap-12 lg:mt-12 lg:gap-14"
         y={-56}
         clip
         stagger={0.12}

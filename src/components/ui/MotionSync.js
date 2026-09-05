@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { onIntroReady, scheduleRefresh } from "@/lib/motion";
+import { isCoarsePointer, onIntroReady, scheduleRefresh } from "@/lib/motion";
 
 /**
  * Keeps every ScrollTrigger's start/end honest.
@@ -21,7 +21,35 @@ export default function MotionSync() {
   useEffect(() => {
     const stopIntro = onIntroReady(scheduleRefresh);
 
-    const ro = new ResizeObserver(scheduleRefresh);
+    // On a phone the address bar collapses and re-expands as you scroll, and
+    // that is a *height* change to the layout viewport — which reaches this
+    // observer as a body resize several times during an ordinary swipe. Each
+    // one used to cost a full ScrollTrigger.refresh() mid-scroll, which is
+    // both the jank and the "the animation fired at the wrong place" that
+    // only ever showed up on touch devices. Width changes (rotation, a
+    // resized window, a foldable opening) are real layout changes and still
+    // refresh; a height-only change on a touch screen is ignored.
+    let lastW = window.innerWidth;
+    let lastH = window.innerHeight;
+    let lastDocH = document.body.offsetHeight;
+    const onBodyResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const docH = document.body.offsetHeight;
+      // Only the viewport's height moved: the document is the same height it
+      // was, and it is the same width. That is the address bar, and nothing
+      // else. Content actually growing (an image decoding, a webfont
+      // swapping) changes the DOCUMENT height and still refreshes, which is
+      // the case this observer exists for.
+      const barOnly = w === lastW && docH === lastDocH && h !== lastH;
+      lastW = w;
+      lastH = h;
+      lastDocH = docH;
+      if (barOnly && isCoarsePointer()) return;
+      scheduleRefresh();
+    };
+
+    const ro = new ResizeObserver(onBodyResize);
     ro.observe(document.body);
 
     if (document.fonts?.ready) document.fonts.ready.then(scheduleRefresh);

@@ -11,11 +11,19 @@ import {
 
 const ACCENT = "#00ff9d";
 
-// Both headlines share one scale so the composition stays proportional.
-// 11.5vw keeps the widest word ("FULL-STACK") inside the viewport at every
-// width with a comfortable margin on phones; the rem floor/ceiling stop it
-// collapsing or exploding at extremes.
-const HEADLINE = "text-[clamp(1.5rem,11.5vw,9rem)]";
+// Both headlines share one scale so the composition stays proportional. This
+// is the one place vw beats a stepped breakpoint scale: the two words are
+// `whitespace-nowrap`, so their size is a function of the width they have to
+// fit into, and a stepped scale would either overflow just below a breakpoint
+// or leave a gap just above one. 11.5vw keeps the widest word ("FULL-STACK")
+// inside the viewport at every width with a comfortable margin on phones; the
+// rem floor/ceiling stop it collapsing or exploding at extremes.
+//
+// `short:` takes over when the viewport runs out of HEIGHT before width — a
+// phone in landscape — where 11.5vw of a 900px-wide screen is taller than the
+// 390px there is to put it in.
+const HEADLINE =
+  "text-[clamp(1.5rem,11.5vw,9rem)] short:text-[clamp(1.5rem,7.5vw,4rem)]";
 
 export default function Hero() {
   const heroRef = useRef(null);
@@ -127,7 +135,7 @@ export default function Hero() {
           headline the way absolute percentage positioning did. */}
       <div
         ref={metaRef}
-        className="container-px flex items-start justify-between gap-4 pt-[clamp(5rem,9vh,6.5rem)] text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.17em] text-white/55"
+        className="container-px flex items-start justify-between gap-4 pt-20 text-[10px] font-medium uppercase tracking-[0.12em] text-white/55 short:pt-14 sm:tracking-[0.17em] lg:pt-24 lg:text-[11px]"
       >
         <span>/ MERN Stack</span>
         <span className="text-right">/ Based in Pakistan</span>
@@ -156,7 +164,7 @@ export default function Hero() {
         <div
           ref={portraitRef}
           data-hero-photo
-          className="relative z-10 -mt-[0.06em] aspect-[4/5] w-[min(58vw,300px)]"
+          className="relative z-10 -mt-[0.06em] aspect-[4/5] w-[min(58vw,34svh,15rem)] sm:w-[min(50vw,36svh,17rem)] lg:w-[min(38svh,18.75rem)]"
         >
           <div className="relative h-full w-full overflow-hidden">
             <Image
@@ -164,7 +172,7 @@ export default function Hero() {
               alt="Saqib Ahmed — Full-Stack Developer"
               fill
               priority
-              sizes="min(58vw, 300px)"
+              sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 58vw"
               className="object-cover object-center grayscale"
             />
             {/* Scrim: fades the photo into the black backdrop so the
@@ -205,19 +213,20 @@ export default function Hero() {
 
         <div
           ref={scrollRef}
-          className="mt-[clamp(2rem,4vh,2.5rem)] flex flex-col items-center gap-3"
+          className="mt-6 flex flex-col items-center gap-3 short:hidden sm:mt-8 lg:mt-10"
         >
-          <span className="whitespace-nowrap text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.18em] text-white/55">
+          <span className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.18em] text-white/55 lg:text-[11px]">
             Scroll to explore ↓
           </span>
-          <span className="h-[clamp(1.75rem,3vh,2.25rem)] w-px animate-scroll-line bg-white/25" />
+          <span className="h-7 w-px animate-scroll-line bg-white/25 lg:h-9" />
         </div>
       </div>
 
-      {/* BOTTOM BAR — flex row that wraps instead of overlapping. */}
-      <div className="container-px flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pb-[clamp(1.75rem,4vh,2.25rem)] text-[clamp(10px,0.75vw,11px)] font-medium uppercase tracking-[0.16em] text-white/50">
+      {/* BOTTOM BAR — stacked on a phone, where the two labels together are
+          wider than the viewport, and a single justified row from `sm`. */}
+      <div className="container-px flex flex-col gap-y-1 pb-7 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 short:pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:tracking-[0.16em] lg:pb-9 lg:text-[11px]">
         <span>© 2026 Saqib Ahmed</span>
-        <span className="text-right">/ Available for opportunities</span>
+        <span className="sm:text-right">/ Available for opportunities</span>
       </div>
     </section>
   );

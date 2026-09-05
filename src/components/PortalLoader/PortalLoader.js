@@ -310,7 +310,7 @@ export default function PortalLoader() {
       className="fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-black"
       style={{ clipPath: "inset(0% 0% 0% 0%)" }}
     >
-      <div ref={portalRef} className="relative aspect-[4/5] w-[min(52vw,248px)]">
+      <div ref={portalRef} className="relative aspect-[4/5] w-[min(52vw,34svh,15.5rem)]">
         <span ref={frameRef} aria-hidden className="absolute inset-0 border border-white/25" />
 
         {/* Two halves, each showing its own portion of the portrait, so the
@@ -325,7 +325,7 @@ export default function PortalLoader() {
               alt=""
               fill
               priority
-              sizes="min(52vw, 248px)"
+              sizes="(min-width: 640px) 248px, 52vw"
               className="object-cover object-center grayscale"
             />
           </span>
@@ -341,18 +341,19 @@ export default function PortalLoader() {
               alt=""
               fill
               priority
-              sizes="min(52vw, 248px)"
+              sizes="(min-width: 640px) 248px, 52vw"
               className="object-cover object-center grayscale"
             />
           </span>
         </span>
       </div>
 
-      {/* Matches the navbar wordmark's weight and tracking exactly, so the
-          landing frame is a pixel match rather than a lookalike. */}
+      {/* Matches the navbar wordmark's weight AND tracking at every
+          breakpoint — including the tighter 0.22em the pill uses below `sm` —
+          so the landing frame is a pixel match rather than a lookalike. */}
       <span
         ref={wordRef}
-        className="absolute whitespace-nowrap font-display font-medium uppercase leading-none tracking-[0.3em] text-[#f3f7ef]"
+        className="absolute whitespace-nowrap font-display font-medium uppercase leading-none tracking-[0.22em] text-[#f3f7ef] sm:tracking-[0.3em]"
         style={{ fontSize: "clamp(1.05rem, 5.4vw, 3.25rem)" }}
       >
         Saqib Ahmed
