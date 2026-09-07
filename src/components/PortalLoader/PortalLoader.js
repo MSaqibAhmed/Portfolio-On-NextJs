@@ -20,6 +20,86 @@ if (typeof window !== "undefined") {
 const IMAGE_WAIT_MS = 1200;
 
 /**
+ * Whether the intro has already run in this document.
+ *
+ * Module scope is the whole point: a real page load evaluates this file
+ * afresh and the flag is false again, while a client-side navigation — going
+ * into a project detail page and back — keeps the module in memory and finds
+ * it true. That is exactly the line the intro should be drawn on.
+ */
+let introPlayed = false;
+
+// How long the restore below keeps correcting itself, and how often.
+const RESTORE_STEP_MS = 50;
+const RESTORE_TRIES = 10;
+
+/**
+ * Scrolls to `#section` from the URL after a client-side return.
+ *
+ * Written repeatedly over about half a second rather than once, because two
+ * other things are writing the same value in the same window: the router does
+ * its own scroll after this effect, and the projects stage only becomes
+ * several screens tall a tick later, when its ScrollTrigger builds the pin —
+ * which moves every section under it. A single early write loses to both.
+ *
+ * It stops the moment the position holds, and the first wheel, touch or key
+ * hands control straight back to the visitor.
+ */
+function restoreHashTarget() {
+  const hash = window.location.hash;
+  if (!hash || hash.length < 2) return;
+
+  scheduleRefresh();
+
+  let tries = 0;
+  let held = 0;
+  let done = false;
+
+  const stop = () => {
+    if (done) return;
+    done = true;
+    window.removeEventListener("wheel", stop);
+    window.removeEventListener("touchstart", stop);
+    window.removeEventListener("keydown", stop);
+  };
+
+  const settle = () => {
+    if (done) return;
+
+    let target = null;
+    try {
+      target = document.querySelector(hash);
+    } catch {
+      // A hash that isn't a valid selector is someone else's link, not ours.
+      stop();
+      return;
+    }
+
+    if (target) {
+      const y = Math.round(target.getBoundingClientRect().top + window.scrollY);
+      if (Math.abs(window.scrollY - y) > 2) {
+        held = 0;
+        window.scrollTo(0, y);
+      } else if (++held >= 2) {
+        stop();
+        return;
+      }
+    }
+
+    if (++tries >= RESTORE_TRIES) {
+      stop();
+      return;
+    }
+    window.setTimeout(settle, RESTORE_STEP_MS);
+  };
+
+  window.addEventListener("wheel", stop, { passive: true });
+  window.addEventListener("touchstart", stop, { passive: true });
+  window.addEventListener("keydown", stop);
+  settle();
+}
+
+/**
  * Brand intro, played on every page load, identical on every device:
  *
  *   tiny square -> portal opens -> portrait resolves -> portal splits ->
@@ -32,7 +112,15 @@ const IMAGE_WAIT_MS = 1200;
  * correct at every breakpoint.
  */
 export default function PortalLoader() {
-  const [show, setShow] = useState(true);
+  // Captured once, at mount: the effect below flips `introPlayed`, so reading
+  // the module flag any later would no longer say how THIS mount started.
+  //
+  // A client-side return has to be answered in the initial state rather than
+  // by clearing it from inside an effect — mounting the opaque overlay and
+  // then removing it is a black flash over a page the visitor was already
+  // looking at.
+  const [returning] = useState(() => introPlayed);
+  const [show, setShow] = useState(!returning);
   const rootRef = useRef(null);
   const portalRef = useRef(null);
   const frameRef = useRef(null);
@@ -41,9 +129,26 @@ export default function PortalLoader() {
   const imageRefs = useRef([]);
   const wordRef = useRef(null);
 
+  // Returning from a project detail page is a client-side navigation, not a
+  // page load: the document was never torn down. Replaying the whole portal
+  // sequence and then dropping the visitor back on the hero is the wrong
+  // answer to "back to all work", so there is no intro to run here — only the
+  // page to release and the section they came from to restore.
   useLayoutEffect(() => {
+    if (!returning) return undefined;
+    delete document.documentElement.dataset.loading;
+    markIntroReady();
+    restoreHashTarget();
+    return undefined;
+  }, [returning]);
+
+  useLayoutEffect(() => {
+    if (returning) return undefined;
+
     const root = rootRef.current;
     if (!root) return undefined;
+
+    introPlayed = true;
 
     // The intro always starts on the hero. Two things can break that: a stale
     // `#section` in the URL (the browser jumps to that anchor on load) and the
@@ -299,7 +404,7 @@ export default function PortalLoader() {
       if (wordmark) gsap.set(wordmark, { clearProps: "opacity,visibility" });
       if (pill) gsap.set(pill, { clearProps: "opacity,transform,visibility" });
     };
-  }, []);
+  }, [returning]);
 
   if (!show) return null;
 

@@ -231,46 +231,287 @@ main > section#home {
   padding-bottom: 0;
 }
 
-main > section + section:not([data-surface-dark]) {
+/* The projects stage owns its own vertical rhythm in both of its layouts —
+   a pinned panel that must be exactly one viewport tall, and a static block
+   that pads its two halves separately. */
+main > section.pstage {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Dark surfaces separate themselves by contrast; so does the projects stage,
+   which opens on a full-bleed black panel. A light hairline drawn across the
+   top of either one reads as a mistake. */
+main > section + section:not([data-surface-dark]):not(.pstage) {
   border-top: 1px solid var(--line);
 }
 
-@keyframes scroll-line {
-  0%,
-  100% {
-    transform: scaleY(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: scaleY(0.35);
-    opacity: 0.35;
+/* ------------------------------------------------------------------ */
+/* Projects — the curtain stage                                        */
+/* ------------------------------------------------------------------ */
+
+/*
+   Two layouts, one piece of markup, chosen by [data-stage].
+
+   "off" is what the server renders, and the only thing a visitor ever sees
+   if the animation cannot run — no JS, reduced motion, a browser that never
+   paints a frame. It is an ordinary black title band above a white grid of
+   cards: nothing stuck, nothing translated off screen, nothing at opacity 0.
+   That default matters more here than anywhere else on the site, because the
+   animation works by covering the whole panel with two opaque curtains: a
+   stage that got stuck half-built would be a black screen where the work
+   should be.
+
+   "on" is written by the component only once the scrubbed timeline is live,
+   and taken away again by its guard if the browser turns out not to be
+   rendering. Only the rules below it turn the section into a sticky stage, so
+   the curtain can never close over the work unless something is there to open
+   it again.
+
+   --pstage-h  is the sticky panel's height  } both written in px from the
+   --pstage-run is the scroll runway under it } live viewport on every
+   ScrollTrigger refresh. The svh fallbacks are what apply before the first
+   measurement, and for anyone whose JS never runs.
+*/
+
+.pstage {
+  --pstage-h: 100svh;
+  --pstage-run: 300svh;
+  --pstage-pad: 1.25rem;
+  --pstage-gap: 1.25rem;
+  --pstage-card: 88vw;
+}
+
+/* sm */
+@media (min-width: 40rem) {
+  .pstage {
+    --pstage-pad: 2rem;
+    --pstage-gap: 2rem;
+    --pstage-card: 56vw;
   }
 }
 
-.animate-scroll-line {
-  transform-origin: top;
-  animation: scroll-line 2.2s ease-in-out infinite;
-}
-
-@keyframes accent-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.8);
+/* md */
+@media (min-width: 48rem) {
+  .pstage {
+    --pstage-card: 42vw;
   }
 }
 
-.animate-accent-pulse {
-  animation: accent-pulse 2.6s ease-in-out infinite;
+/* lg */
+@media (min-width: 64rem) {
+  .pstage {
+    --pstage-pad: 3rem;
+    --pstage-gap: 3rem;
+    --pstage-card: 32vw;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-scroll-line,
-  .animate-accent-pulse {
-    animation: none;
+/* 2xl */
+@media (min-width: 96rem) {
+  .pstage {
+    --pstage-pad: 3.5rem;
+    --pstage-card: 27vw;
+  }
+}
+
+.pstage-word {
+  white-space: nowrap;
+}
+
+/* ---- static: the layout everyone is guaranteed --------------------- */
+
+.pstage[data-stage="off"] {
+  overflow: hidden;
+}
+
+.pstage[data-stage="off"] .pstage-curtain[data-curtain="bottom"] {
+  display: none;
+}
+
+.pstage[data-stage="off"] .pstage-word-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem var(--pstage-pad);
+}
+
+.pstage[data-stage="off"] .pstage-viewport {
+  background: var(--mint);
+  padding: 3.5rem var(--pstage-pad) 4.5rem;
+}
+
+.pstage[data-stage="off"] .pstage-title {
+  text-align: center;
+}
+
+.pstage[data-stage="off"] .pstage-track {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 48rem) {
+  .pstage[data-stage="off"] .pstage-track {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3.5rem;
+  }
+}
+
+.pstage[data-stage="off"] .pstage-rail {
+  display: none;
+}
+
+/* ---- animated: the sticky stage ------------------------------------ */
+
+/* The section is the TRACK — one panel plus the runway the sequence is
+   scrubbed over. It must stay `overflow: visible`: a clipping parent turns
+   into the sticky child's scrollport, and the child then sticks to a box
+   that never scrolls, which looks exactly like sticky not working at all. */
+.pstage[data-stage="on"] {
+  height: calc(var(--pstage-h) + var(--pstage-run));
+  overflow: visible;
+}
+
+/* Held on screen by the browser, on the compositor — see the note in
+   Projects.js for why this is sticky and not a ScrollTrigger pin. */
+.pstage[data-stage="on"] .pstage-sticky {
+  position: sticky;
+  top: 0;
+  height: var(--pstage-h);
+  overflow: hidden;
+}
+
+.pstage[data-stage="on"] .pstage-curtain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(var(--pstage-h) / 2);
+  overflow: hidden;
+  background: #000;
+  z-index: 2;
+  will-change: transform;
+}
+
+/* One pixel taller than half, so the two halves OVERLAP at the split instead
+   of meeting on it. A viewport with an odd height (or any fractional device
+   pixel ratio) rounds `50%` down on both sides, and the white stage sitting
+   directly underneath shows through the seam as a bright hairline across a
+   screen that is supposed to be solid black. */
+.pstage[data-stage="on"] .pstage-curtain[data-curtain="top"] {
+  top: 0;
+  height: calc(var(--pstage-h) / 2 + 1px);
+}
+
+.pstage[data-stage="on"] .pstage-curtain[data-curtain="bottom"] {
+  bottom: 0;
+}
+
+/* The word is centred inside a box a FULL panel tall that is pinned to the
+   edge its own half sits against. Both halves therefore centre it on the same
+   line — the split — and the half-height curtain above clips each one to its
+   own half. That is what makes the two panels read as one word. */
+.pstage[data-stage="on"] .pstage-word-box {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--pstage-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  will-change: transform;
+}
+
+.pstage[data-stage="on"] [data-curtain="top"] .pstage-word-box {
+  top: 0;
+}
+
+.pstage[data-stage="on"] [data-curtain="bottom"] .pstage-word-box {
+  bottom: 0;
+}
+
+.pstage[data-stage="on"] .pstage-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--mint);
+  padding: 0;
+  z-index: 1;
+}
+
+.pstage[data-stage="on"] .pstage-content {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.pstage[data-stage="on"] .pstage-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  text-align: center;
+  z-index: 0;
+}
+
+/* `width: max-content` rather than `inset: 0`, so the rail's box IS its
+   content: the timeline reads `scrollWidth` to know where the run ends, and
+   that is only dependable when the children aren't overflowing the element
+   being measured. */
+.pstage[data-stage="on"] .pstage-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: var(--pstage-gap);
+  z-index: 1;
+  will-change: transform;
+}
+
+.pstage[data-stage="on"] .pstage-rail {
+  flex: 0 0 auto;
+  width: var(--pstage-pad);
+  align-self: stretch;
+}
+
+.pstage[data-stage="on"] .pstage-card {
+  flex: 0 0 auto;
+  width: var(--pstage-card);
+  /* An opaque plate, so the card's caption stays on white while the PROJECTS
+     wordmark runs solid black behind the rail. */
+  background: var(--mint);
+}
+
+/* The zig-zag. Counted by element type, not position: the two gutter rails
+   are spans, and counting children would shift which cards land on which side
+   of the alternation.
+
+   Shallower on a phone, where the card is most of the screen wide: the same
+   offset that reads as rhythm on a desktop rail is enough to push a caption
+   off the bottom edge of a 375px screen. */
+.pstage[data-stage="on"] article.pstage-card:nth-of-type(even) {
+  transform: translateY(5%);
+}
+
+.pstage[data-stage="on"] article.pstage-card:nth-of-type(odd) {
+  transform: translateY(-5%);
+}
+
+/* sm */
+@media (min-width: 40rem) {
+  .pstage[data-stage="on"] article.pstage-card:nth-of-type(even) {
+    transform: translateY(11%);
+  }
+
+  .pstage[data-stage="on"] article.pstage-card:nth-of-type(odd) {
+    transform: translateY(-11%);
   }
 }

@@ -26,9 +26,9 @@ export const navMenu = [
   },
   {
     index: "04",
-    label: "Featured Works",
+    label: "Projects",
     href: "#projects",
-    meta: `${String(projects.length).padStart(2, "0")} Projects`,
+    meta: `${String(projects.length).padStart(2, "0")} Case Studies`,
   },
   {
     index: "05",

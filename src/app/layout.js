@@ -102,7 +102,15 @@ const websiteJsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${roboto.variable} antialiased scroll-smooth`}>
+    // `data-scroll-behavior` is Next's opt-in for a page that sets
+    // `scroll-behavior: smooth` on <html>: without it the router smooth-
+    // scrolls its way to the top on every route change, which now matters —
+    // the project detail pages are real routes.
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${roboto.variable} antialiased scroll-smooth`}
+    >
       <body className="min-h-screen flex flex-col bg-mint text-ink font-sans">
         {children}
         <script
